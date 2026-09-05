@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Camera, ShieldCheck } from 'lucide-react';
+import { Camera, ShieldCheck, CloudSun } from 'lucide-react';
 
 export default function HomePage() {
   return (
@@ -24,32 +24,39 @@ export default function HomePage() {
         </span>
       </header>
 
-      {/* Main Hero & One Clear Decision */}
-      <main className="flex-1 flex flex-col justify-center py-10">
+      {/* Main Hero & Actions */}
+      <main className="flex-1 flex flex-col justify-center py-8">
         <div className="space-y-4">
           <h2 className="font-display text-3xl font-medium text-[#111827] leading-[1.2]">
-            Diagnose crop illness from a photo.
+            Diagnose crop illness &amp; get weather advice.
           </h2>
           <p className="text-base text-[#374151] leading-relaxed">
-            Take a picture of an unhealthy leaf or crop to get an immediate diagnosis and plain-language treatment advice.
+            Take a picture of an unhealthy leaf or check local weather-based irrigation and disease advisories.
           </p>
           <p className="text-sm text-[#4b5563]">
-            पत्ती या पौधे की तस्वीर लें और तुरंत बीमारी व समाधान जानें।
+            पत्ती की फोटो से बीमारी पहचानें या अपने जिले का मौसम पूर्वानुमान व कृषि सलाह जानें।
           </p>
         </div>
 
-        {/* Primary Call To Action */}
-        <div className="mt-10">
+        {/* Action Buttons */}
+        <div className="mt-8 space-y-3">
+          {/* Primary CTA: Crop Diagnosis */}
           <Link
             href="/diagnose"
             className="w-full min-h-[56px] px-6 py-4 rounded-xl bg-[#14532d] hover:bg-[#166534] active:bg-[#0f3d20] text-white font-medium text-lg flex items-center justify-center gap-3 transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-[#14532d]/30"
           >
             <Camera className="w-6 h-6" strokeWidth={2} />
-            <span>Check my crop</span>
+            <span>Check my crop (फसल जांचें)</span>
           </Link>
-          <p className="text-center text-xs text-[#4b5563] mt-3">
-            अपनी फसल की जांच करें &bull; Simple &amp; free
-          </p>
+
+          {/* Standalone Advisory Action */}
+          <Link
+            href="/advisory"
+            className="w-full min-h-[52px] px-6 py-3.5 rounded-xl bg-white hover:bg-stone-100 active:bg-stone-200 border-2 border-[#14532d] text-[#14532d] font-semibold text-base flex items-center justify-center gap-2.5 transition-colors focus:outline-none focus:ring-4 focus:ring-[#14532d]/20"
+          >
+            <CloudSun className="w-5 h-5" strokeWidth={2.2} />
+            <span>Weather Advisory (मौसम सलाह)</span>
+          </Link>
         </div>
       </main>
 

@@ -39,6 +39,39 @@ export interface Database {
         };
         Relationships: [];
       };
+      advisories: {
+        Row: {
+          id: string;
+          created_at: string;
+          state: string;
+          district: string;
+          crop_type: string | null;
+          weather_snapshot: Json | null;
+          advisory_text: string;
+          language: string;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          state: string;
+          district: string;
+          crop_type?: string | null;
+          weather_snapshot?: Json | null;
+          advisory_text: string;
+          language?: string;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          state?: string;
+          district?: string;
+          crop_type?: string | null;
+          weather_snapshot?: Json | null;
+          advisory_text?: string;
+          language?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -57,3 +90,5 @@ export interface Database {
 
 export type Diagnosis = Database['public']['Tables']['diagnoses']['Row'];
 export type NewDiagnosis = Database['public']['Tables']['diagnoses']['Insert'];
+export type Advisory = Database['public']['Tables']['advisories']['Row'];
+export type NewAdvisory = Database['public']['Tables']['advisories']['Insert'];

@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import type { WeatherSnapshot } from './weather';
 
 export interface DiagnosisResult {
   crop: string;
@@ -6,6 +7,17 @@ export interface DiagnosisResult {
   is_healthy: boolean;
   confidence: 'High' | 'Moderate' | 'Low';
   recommendation: string;
+  spoken_text: string;
+  language: 'hi' | 'bn' | 'en';
+  audio_base64?: string;
+}
+
+export interface AdvisoryResult {
+  state: string;
+  district: string;
+  crop: string;
+  weather_snapshot: WeatherSnapshot;
+  advisory_text: string;
   spoken_text: string;
   language: 'hi' | 'bn' | 'en';
   audio_base64?: string;
@@ -112,8 +124,68 @@ function getAgronomicFallback(cropHint: string, isHealthy: boolean, language: 'h
 }
 
 /**
+ * Generate fallback weather advisory when Gemini API is offline or key unconfigured
+ */
+function getWeatherAdvisoryFallback(
+  crop: string,
+  state: string,
+  district: string,
+  weather: WeatherSnapshot,
+  language: 'hi' | 'bn' | 'en'
+): AdvisoryResult {
+  const rainNoteEn = weather.is_rain_likely
+    ? 'Rain is expected in your area today. Hold off on irrigation and pesticide spraying until dry weather.'
+    : 'No heavy rain expected today. Standard irrigation can proceed in the early morning.';
+  
+  const pestNoteEn = weather.is_high_humidity
+    ? 'High humidity (>70%) increases the risk of fungal blight. Inspect leaf undersides closely.'
+    : 'Moderate humidity. Keep soil aerated and clear of weeds.';
+
+  const rainNoteHi = weather.is_rain_likely
+    ? 'आज आपके क्षेत्र में वर्षा की संभावना है। कृपया सिंचाई और कीटनाशक छिड़काव अभी रोकें।'
+    : 'आज भारी बारिश की संभावना कम है। सुबह के समय सामान्य सिंचाई कर सकते हैं।';
+
+  const pestNoteHi = weather.is_high_humidity
+    ? 'हवा में नमी अधिक होने के कारण फफूंद व झुलसा रोग का खतरा बढ़ जाता है। पत्तियों की नियमित जांच करें।'
+    : 'मौसम अनुकूल है। क्यारियों में जल निकासी ठीक रखें और खरपतवार हटाएं।';
+
+  const rainNoteBn = weather.is_rain_likely
+    ? 'আজ আপনার এলাকায় বৃষ্টির সম্ভাবনা রয়েছে। সেচ ও কীটনাশক প্রয়োগ স্থগিত রাখুন।'
+    : 'আজ ভারী বৃষ্টির সম্ভাবনা নেই। সকালে প্রয়োজনীয় সেচ দিতে পারেন।';
+
+  const pestNoteBn = weather.is_high_humidity
+    ? 'বাতাসে আর্দ্রতা বেশি থাকায় ছত্রাকজনিত রোগের ঝুঁকি বাড়তে পারে। পাতার নিচে খেয়াল রাখুন।'
+    : 'আবহাওয়া অনুকূলে রয়েছে। জমির আগাছা পরিষ্কার রাখুন।';
+
+  const translations = {
+    en: {
+      advisory: `1. Irrigation Timing: ${rainNoteEn}\n2. Pest & Disease Risk: ${pestNoteEn}\n3. Field Action: Ensure drainage channels in your ${crop} field are clear of debris.`,
+      spoken: `${district} weather update: ${rainNoteEn} Watch out for fungal risks due to moisture.`,
+    },
+    hi: {
+      advisory: `1. सिंचाई सलाह: ${rainNoteHi}\n2. रोग व कीट प्रबंधन: ${pestNoteHi}\n3. खेत प्रबंधन: ${district} में अपने ${crop} के खेत में पानी निकासी की उचित व्यवस्था रखें।`,
+      spoken: `${district} मौसम सलाह: ${rainNoteHi} नमी के कारण फसल की फफूंद से सुरक्षा करें।`,
+    },
+    bn: {
+      advisory: `১. সেচ পরামর্শ: ${rainNoteBn}\n২. রোগ ও পোকা নিয়ন্ত্রণ: ${pestNoteBn}\n৩. মাঠের পরিচর্যা: ${district} অঞ্চলে আপনার ${crop} জমিতে নিকাশী ব্যবস্থা ঠিক রাখুন।`,
+      spoken: `${district} আবহাওয়া পরামর্শ: ${rainNoteBn} আর্দ্রতার কারণে ছত্রাকজনিত রোগের ঝুঁকি থেকে সতর্ক থাকুন।`,
+    },
+  };
+
+  const t = translations[language] || translations.en;
+  return {
+    state,
+    district,
+    crop,
+    weather_snapshot: weather,
+    advisory_text: t.advisory,
+    spoken_text: t.spoken,
+    language,
+  };
+}
+
+/**
  * Generate a short playable audio WAV tone/voice placeholder
- * for browser autoplay and replay proof
  */
 function createWavAudioBuffer(durationSeconds = 1.5, sampleRate = 8000, frequency = 440): string {
   const numSamples = Math.floor(durationSeconds * sampleRate);
@@ -124,13 +196,13 @@ function createWavAudioBuffer(durationSeconds = 1.5, sampleRate = 8000, frequenc
   buffer.writeUInt32LE(36 + numSamples * 2, 4);
   buffer.write('WAVE', 8);
   buffer.write('fmt ', 12);
-  buffer.writeUInt32LE(16, 16); // Subchunk1Size (16 for PCM)
-  buffer.writeUInt16LE(1, 20); // AudioFormat (1 = PCM)
-  buffer.writeUInt16LE(1, 22); // NumChannels (1 = Mono)
-  buffer.writeUInt32LE(sampleRate, 24); // SampleRate
-  buffer.writeUInt32LE(sampleRate * 2, 28); // ByteRate
-  buffer.writeUInt16LE(2, 32); // BlockAlign
-  buffer.writeUInt16LE(16, 34); // BitsPerSample
+  buffer.writeUInt32LE(16, 16);
+  buffer.writeUInt16LE(1, 20);
+  buffer.writeUInt16LE(1, 22);
+  buffer.writeUInt32LE(sampleRate, 24);
+  buffer.writeUInt32LE(sampleRate * 2, 28);
+  buffer.writeUInt16LE(2, 32);
+  buffer.writeUInt16LE(16, 34);
   buffer.write('data', 36);
   buffer.writeUInt32LE(numSamples * 2, 40);
 
@@ -156,7 +228,6 @@ export async function diagnoseCropImage(
 
   if (!apiKey || apiKey.includes('AIzaSyBMUVDm1ZZXS0p2XVA')) {
     console.warn('[Gemini] Using agronomic fallback due to unconfigured/invalid GEMINI_API_KEY');
-    // Inspect image characteristics for simulated diagnosis if key invalid
     const isHealthy = imageBuffer.length % 2 === 0;
     const result = getAgronomicFallback('tomato', isHealthy, language);
     result.audio_base64 = createWavAudioBuffer(2.0, 8000, isHealthy ? 587.33 : 440);
@@ -200,7 +271,6 @@ Only output raw JSON.`;
     const parsed = JSON.parse(response.text || '{}');
     let audioBase64: string | undefined;
 
-    // Generate native spoken audio if possible
     try {
       audioBase64 = await generateSpokenAudio(parsed.spoken_text || parsed.recommendation, language);
     } catch {
@@ -227,7 +297,6 @@ Only output raw JSON.`;
 
 /**
  * Native Audio understanding crop disease diagnosis using Gemini 2.5 Flash
- * Accepts raw audio recorded directly by the farmer in Hindi/Bengali/English
  */
 export async function diagnoseCropAudio(
   audioBuffer: Buffer,
@@ -306,6 +375,89 @@ Only output raw JSON.`;
 }
 
 /**
+ * Generate localized weather and crop advisory using Gemini 2.5 Flash
+ */
+export async function generateWeatherAdvisory(
+  crop: string,
+  state: string,
+  district: string,
+  weather: WeatherSnapshot,
+  language: 'hi' | 'bn' | 'en' = 'en'
+): Promise<AdvisoryResult> {
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey || apiKey.includes('AIzaSyBMUVDm1ZZXS0p2XVA')) {
+    console.warn('[Gemini Advisory] Using agronomic fallback due to invalid GEMINI_API_KEY');
+    const fallback = getWeatherAdvisoryFallback(crop, state, district, weather, language);
+    fallback.audio_base64 = createWavAudioBuffer(2.5, 8000, 440);
+    return fallback;
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
+
+  const prompt = `You are FasalSetu's expert agricultural meteorologist.
+Location: ${district}, ${state}, India.
+Crop: ${crop}.
+Weather conditions:
+- Temperature: ${weather.temperature_c}°C
+- Humidity: ${weather.humidity_percent}%
+- Rain probability today: ${weather.rain_probability_max}%
+- Precipitation: ${weather.precipitation_mm} mm
+- Conditions: ${weather.weather_description}
+
+Provide a short, localized, actionable recommendation for a farmer in plain language with no academic jargon.
+Address:
+1. Irrigation timing (whether to water or wait given rain).
+2. Pest/disease risk given the current humidity and temperature.
+3. Timely field action.
+Language to respond in: ${language === 'hi' ? 'Hindi' : language === 'bn' ? 'Bengali' : 'English'}.
+
+Respond strictly with a JSON object:
+{
+  "advisory_text": "3 clear bullet points of practical field advice in ${language === 'hi' ? 'Hindi' : language === 'bn' ? 'Bengali' : 'English'}.",
+  "spoken_text": "A friendly 2-sentence conversational spoken summary to read aloud to the farmer in ${language === 'hi' ? 'Hindi' : language === 'bn' ? 'Bengali' : 'English'}."
+}
+Only output raw JSON.`;
+
+  try {
+    const response = await callWithRetry(async () => {
+      return await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+        },
+      });
+    });
+
+    const parsed = JSON.parse(response.text || '{}');
+    let audioBase64: string | undefined;
+
+    try {
+      audioBase64 = await generateSpokenAudio(parsed.spoken_text || parsed.advisory_text, language);
+    } catch {
+      audioBase64 = createWavAudioBuffer(2.5, 8000, 440);
+    }
+
+    return {
+      state,
+      district,
+      crop,
+      weather_snapshot: weather,
+      advisory_text: parsed.advisory_text,
+      spoken_text: parsed.spoken_text || parsed.advisory_text,
+      language,
+      audio_base64: audioBase64,
+    };
+  } catch (err) {
+    console.error('[Gemini Advisory Error]:', err);
+    const fallback = getWeatherAdvisoryFallback(crop, state, district, weather, language);
+    fallback.audio_base64 = createWavAudioBuffer(2.5, 8000, 440);
+    return fallback;
+  }
+}
+
+/**
  * Native Gemini Audio TTS generation
  */
 export async function generateSpokenAudio(
@@ -335,7 +487,6 @@ export async function generateSpokenAudio(
       },
     });
 
-    // Check candidate inlineData
     const candidate = response.candidates?.[0];
     const parts = candidate?.content?.parts;
     const audioPart = parts?.find((p) => p.inlineData?.mimeType?.includes('audio'));
