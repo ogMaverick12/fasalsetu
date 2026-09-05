@@ -77,6 +77,22 @@ export interface Translations {
     rainChance: string;
     errorTitle: string;
     errorDesc: string;
+    locationMode: string;
+    autoGpsTab: string;
+    manualTab: string;
+    detectLocationBtn: string;
+    detectingLocation: string;
+    locationDetected: string;
+    nearestDistrict: string;
+    distanceKm: string;
+    instantAdvisory: string;
+    chooseCrop: string;
+    mapHint: string;
+    geoDenied: string;
+    mapView: string;
+    listView: string;
+    resetMap: string;
+    approxLocation: string;
   };
   guidance: {
     modalTitle: string;
@@ -201,6 +217,22 @@ export const I18N: Record<Language, Translations> = {
       rainChance: 'बारिश की संभावना',
       errorTitle: 'सलाह प्राप्त नहीं हो सकी',
       errorDesc: 'मौसम की जानकारी प्राप्त करने में समस्या आई, कृपया दोबारा प्रयास करें।',
+      locationMode: 'स्थान चुनने का तरीका:',
+      autoGpsTab: '📍 ऑटो GPS व मानचित्र',
+      manualTab: '📝 सूची से चुनें',
+      detectLocationBtn: '📍 मेरा स्थान स्वतः पहचानें (GPS)',
+      detectingLocation: 'स्थान खोजा जा रहा है...',
+      locationDetected: '📍 स्थान पहचाना गया:',
+      nearestDistrict: 'निकटतम कृषि केंद्र:',
+      distanceKm: 'किमी दूर',
+      instantAdvisory: 'तुरंत मौसम सलाह देखें',
+      chooseCrop: 'फसल चुनें व आगे बढ़ें',
+      mapHint: 'मानचित्र पर किसी भी जिले पर टैप करें या अपना स्थान पिन करें',
+      geoDenied: 'स्थान अनुमति नहीं मिली। कृपया मानचित्र या सूची से चुनें।',
+      mapView: 'मानचित्र',
+      listView: 'सूची',
+      resetMap: 'मानचित्र रीसेट',
+      approxLocation: 'अनुमानित स्थान',
     },
     guidance: {
       modalTitle: 'किसान मार्गदर्शिका व सुगमता',
@@ -323,6 +355,22 @@ export const I18N: Record<Language, Translations> = {
       rainChance: 'বৃষ্টির সম্ভাবনা',
       errorTitle: 'পরামর্শ পাওয়া যায়নি',
       errorDesc: 'আবহাওয়ার তথ্য আনতে সমস্যা হয়েছে, অনুগ্রহ করে আবার চেষ্টা করুন।',
+      locationMode: 'স্থান নির্বাচনের পদ্ধতি:',
+      autoGpsTab: '📍 অটো GPS ও মানচিত্র',
+      manualTab: '📝 তালিকা থেকে বাছুন',
+      detectLocationBtn: '📍 আমার অবস্থান শনাক্ত করুন (GPS)',
+      detectingLocation: 'অবস্থান খোঁজা হচ্ছে...',
+      locationDetected: '📍 অবস্থান শনাক্ত হয়েছে:',
+      nearestDistrict: 'নিকটতম কৃষি কেন্দ্র:',
+      distanceKm: 'কিমি দূরে',
+      instantAdvisory: 'তাত্ক্ষণিক আবহাওয়া পরামর্শ পান',
+      chooseCrop: 'ফসল বাছুন ও এগিয়ে যান',
+      mapHint: 'মানচিত্রে যেকোনো জেলায় ট্যাপ করুন অথবা আপনার অবস্থান পিন করুন',
+      geoDenied: 'অবস্থান অনুমতি মেলেনি। অনুগ্রহ করে মানচিত্র বা তালিকা থেকে বাছুন।',
+      mapView: 'মানচিত্র',
+      listView: 'তালিকা',
+      resetMap: 'মানচিত্র রিসেট',
+      approxLocation: 'আনুমানিক অবস্থান',
     },
     guidance: {
       modalTitle: 'কৃষক নির্দেশিকা ও সহায়তা',
@@ -445,6 +493,22 @@ export const I18N: Record<Language, Translations> = {
       rainChance: 'Rain Probability',
       errorTitle: 'Advisory Unavailable',
       errorDesc: 'Could not retrieve weather forecast. Please try again.',
+      locationMode: 'Location Selection Mode:',
+      autoGpsTab: '📍 Auto GPS & Map',
+      manualTab: '📝 Manual List',
+      detectLocationBtn: '📍 Auto-Detect My Location (GPS)',
+      detectingLocation: 'Detecting your location...',
+      locationDetected: '📍 Location Detected:',
+      nearestDistrict: 'Nearest Farm Center:',
+      distanceKm: 'km away',
+      instantAdvisory: 'Get Instant Weather Advisory',
+      chooseCrop: 'Select Crop & Proceed',
+      mapHint: 'Tap any district on the map or drop your pin',
+      geoDenied: 'Location permission denied. Please pick from map or list.',
+      mapView: 'Map View',
+      listView: 'List View',
+      resetMap: 'Reset Map',
+      approxLocation: 'Approximate Location',
     },
     guidance: {
       modalTitle: 'Farmer Guide & Accessibility',

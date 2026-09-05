@@ -128,6 +128,86 @@ export const INDIAN_STATES: StateInfo[] = [
       { name: 'Salem', name_hi: 'सलेम', name_bn: 'সালেম', lat: 11.6643, lon: 78.146 },
     ],
   },
+  {
+    name: 'Andhra Pradesh',
+    name_hi: 'आंध्र प्रदेश',
+    name_bn: 'অন্ধ্রপ্রদেশ',
+    districts: [
+      { name: 'Guntur', name_hi: 'गुंटूर', name_bn: 'গুন্টুর', lat: 16.3067, lon: 80.4365 },
+      { name: 'Vijayawada', name_hi: 'विजयवाड़ा', name_bn: 'বিজয়ওয়াড়া', lat: 16.5062, lon: 80.648 },
+      { name: 'Kurnool', name_hi: 'कुरनूल', name_bn: 'কুর্নুল', lat: 15.8281, lon: 78.0373 },
+    ],
+  },
+  {
+    name: 'Telangana',
+    name_hi: 'तेलंगाना',
+    name_bn: 'তেলেঙ্গানা',
+    districts: [
+      { name: 'Warangal', name_hi: 'वारंगल', name_bn: 'ওয়ারাঙ্গল', lat: 17.9689, lon: 79.5941 },
+      { name: 'Karimnagar', name_hi: 'करीमनगर', name_bn: 'করিম নগর', lat: 18.4386, lon: 79.1288 },
+      { name: 'Nizamabad', name_hi: 'निजामाबाद', name_bn: 'নিজামাবাদ', lat: 18.6725, lon: 78.0941 },
+    ],
+  },
+  {
+    name: 'Haryana',
+    name_hi: 'हरियाणा',
+    name_bn: 'হরিয়ানা',
+    districts: [
+      { name: 'Karnal', name_hi: 'करनाल', name_bn: 'কারনাল', lat: 29.6857, lon: 76.9905 },
+      { name: 'Hisar', name_hi: 'हिसार', name_bn: 'হিসার', lat: 29.1492, lon: 75.7217 },
+      { name: 'Sirsa', name_hi: 'सिरसा', name_bn: 'সিরসা', lat: 29.5349, lon: 75.0289 },
+    ],
+  },
+  {
+    name: 'Odisha',
+    name_hi: 'ओडिशा',
+    name_bn: 'ওড়িশা',
+    districts: [
+      { name: 'Cuttack', name_hi: 'कटक', name_bn: 'কটক', lat: 20.4625, lon: 85.8828 },
+      { name: 'Bargarh', name_hi: 'बरगढ़', name_bn: 'বারগড়', lat: 21.334, lon: 83.619 },
+      { name: 'Sambalpur', name_hi: 'संबलपुर', name_bn: 'সম্বলপুর', lat: 21.4669, lon: 83.9812 },
+    ],
+  },
+  {
+    name: 'Kerala',
+    name_hi: 'केरल',
+    name_bn: 'কেরল',
+    districts: [
+      { name: 'Wayanad', name_hi: 'वायनाड', name_bn: 'ওয়েনাড়', lat: 11.6854, lon: 76.132 },
+      { name: 'Palakkad', name_hi: 'पालक्काड़', name_bn: 'পালাক্কাদ', lat: 10.7867, lon: 76.6548 },
+      { name: 'Idukki', name_hi: 'इडुक्की', name_bn: 'ইদুক্কি', lat: 9.8494, lon: 76.9804 },
+    ],
+  },
+  {
+    name: 'Assam',
+    name_hi: 'असम',
+    name_bn: 'আসাম',
+    districts: [
+      { name: 'Jorhat', name_hi: 'जोरहाट', name_bn: 'জোরহাট', lat: 26.7509, lon: 94.2037 },
+      { name: 'Nagaon', name_hi: 'नगांव', name_bn: 'নগাঁও', lat: 26.3467, lon: 92.684 },
+      { name: 'Kamrup', name_hi: 'कामरूप', name_bn: 'কামরূপ', lat: 26.3161, lon: 91.5984 },
+    ],
+  },
+  {
+    name: 'Himachal Pradesh',
+    name_hi: 'हिमाचल प्रदेश',
+    name_bn: 'হিমাচল প্রদেশ',
+    districts: [
+      { name: 'Shimla', name_hi: 'शिमला', name_bn: 'শিমলা', lat: 31.1048, lon: 77.1734 },
+      { name: 'Kullu', name_hi: 'कुल्लू', name_bn: 'কুল্লু', lat: 31.9579, lon: 77.1095 },
+      { name: 'Kangra', name_hi: 'कांगड़ा', name_bn: 'কাংড়া', lat: 32.0998, lon: 76.2691 },
+    ],
+  },
+  {
+    name: 'Jammu & Kashmir',
+    name_hi: 'जम्मू और कश्मीर',
+    name_bn: 'জম্মু ও কাশ্মীর',
+    districts: [
+      { name: 'Srinagar', name_hi: 'श्रीनगर', name_bn: 'শ্রীনগর', lat: 34.0837, lon: 74.7973 },
+      { name: 'Baramulla', name_hi: 'बारामूला', name_bn: 'বারামুল্লা', lat: 34.2017, lon: 74.3435 },
+      { name: 'Anantnag', name_hi: 'अनंतनाग', name_bn: 'অনন্তনাগ', lat: 33.7311, lon: 75.1522 },
+    ],
+  },
 ];
 
 export interface CropInfo {
@@ -155,7 +235,6 @@ export function getDistrictCoordinates(stateName: string, districtName: string):
     (s) => s.name.toLowerCase() === stateName.toLowerCase() || s.name_hi === stateName || s.name_bn === stateName
   );
   if (!state) {
-    // Default to central India coordinate if state not found
     return { lat: 20.5937, lon: 78.9629 };
   }
 
@@ -168,4 +247,139 @@ export function getDistrictCoordinates(stateName: string, districtName: string):
   }
 
   return { lat: district.lat, lon: district.lon };
+}
+
+/**
+ * Haversine formula to calculate the great-circle distance between two points in km
+ */
+export function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c * 10) / 10;
+}
+
+export interface NearestDistrictResult {
+  state: StateInfo;
+  district: DistrictCoord;
+  distanceKm: number;
+}
+
+/**
+ * Finds the nearest agricultural district from any given coordinates in India
+ */
+export function findNearestDistrict(lat: number, lon: number): NearestDistrictResult {
+  let minDistance = Infinity;
+  let closestState = INDIAN_STATES[0];
+  let closestDistrict = INDIAN_STATES[0].districts[0];
+
+  for (const state of INDIAN_STATES) {
+    for (const district of state.districts) {
+      const dist = calculateDistanceKm(lat, lon, district.lat, district.lon);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestState = state;
+        closestDistrict = district;
+      }
+    }
+  }
+
+  return {
+    state: closestState,
+    district: closestDistrict,
+    distanceKm: minDistance,
+  };
+}
+
+/**
+ * Reverse-geocode latitude and longitude using free OpenStreetMap Nominatim API,
+ * with safety timeout and fallback to nearest district matching.
+ */
+export async function reverseGeocodeCoords(
+  lat: number,
+  lon: number
+): Promise<{
+  placeName?: string;
+  detectedDistrictName?: string;
+  detectedStateName?: string;
+  matchedState: StateInfo;
+  matchedDistrict: DistrictCoord;
+  distanceKm: number;
+}> {
+  const nearest = findNearestDistrict(lat, lon);
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
+
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`,
+      {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'FasalSetu-AgriApp/1.0',
+        },
+      }
+    );
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      const addr = data.address || {};
+      const detectedDistrict = addr.state_district || addr.county || addr.district || addr.city;
+      const detectedState = addr.state;
+      const placeName = addr.village || addr.town || addr.city || addr.suburb || addr.county;
+
+      if (detectedState) {
+        const matchingState = INDIAN_STATES.find(
+          (s) =>
+            s.name.toLowerCase().includes(detectedState.toLowerCase()) ||
+            detectedState.toLowerCase().includes(s.name.toLowerCase())
+        );
+        if (matchingState) {
+          if (detectedDistrict) {
+            const matchingDistrict = matchingState.districts.find(
+              (d) =>
+                d.name.toLowerCase().includes(detectedDistrict.toLowerCase()) ||
+                detectedDistrict.toLowerCase().includes(d.name.toLowerCase())
+            );
+            if (matchingDistrict) {
+              return {
+                placeName,
+                detectedDistrictName: detectedDistrict,
+                detectedStateName: detectedState,
+                matchedState: matchingState,
+                matchedDistrict: matchingDistrict,
+                distanceKm: calculateDistanceKm(lat, lon, matchingDistrict.lat, matchingDistrict.lon),
+              };
+            }
+          }
+        }
+      }
+
+      return {
+        placeName,
+        detectedDistrictName: detectedDistrict,
+        detectedStateName: detectedState,
+        matchedState: nearest.state,
+        matchedDistrict: nearest.district,
+        distanceKm: nearest.distanceKm,
+      };
+    }
+  } catch {
+    // Fallback cleanly to nearest math
+  }
+
+  return {
+    matchedState: nearest.state,
+    matchedDistrict: nearest.district,
+    distanceKm: nearest.distanceKm,
+  };
 }

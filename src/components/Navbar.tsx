@@ -73,6 +73,7 @@ export default function Navbar({
               return (
                 <button
                   key={lang}
+                  id={`lang-btn-${lang}`}
                   onClick={() => setLanguage(lang)}
                   className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all min-h-[44px] min-w-[44px] flex items-center justify-center ${
                     isSelected
