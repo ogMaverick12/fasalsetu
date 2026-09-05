@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import {
-  ArrowLeft,
   CloudSun,
   Droplets,
   Wind,
@@ -15,10 +14,12 @@ import {
   MapPin,
   Sprout,
 } from 'lucide-react';
+import { useApp } from '@/context/AppContext';
+import { I18N } from '@/lib/i18n';
+import Navbar from '@/components/Navbar';
+import StartupGuidanceModal from '@/components/StartupGuidanceModal';
 import { INDIAN_STATES, CROPS_LIST } from '@/lib/geo-india';
 import type { WeatherSnapshot } from '@/lib/weather';
-
-type Language = 'hi' | 'bn' | 'en';
 
 interface AdvisoryResult {
   state: string;
@@ -27,96 +28,14 @@ interface AdvisoryResult {
   weather_snapshot: WeatherSnapshot;
   advisory_text: string;
   spoken_text: string;
-  language: Language;
+  language: string;
   audio_base64?: string;
 }
 
-const UI_STRINGS = {
-  hi: {
-    title: 'मौसम व फसल सलाह',
-    subtitle: 'आपके जिले का सटीक पूर्वानुमान',
-    selectState: 'अपना राज्य चुनें',
-    selectDistrict: 'अपना जिला चुनें',
-    selectCrop: 'फसल चुनें',
-    step1Title: 'कदम 1: राज्य चुनें',
-    step2Title: 'कदम 2: जिला चुनें',
-    step3Title: 'कदम 3: फसल चुनें',
-    nextBtn: 'आगे बढ़ें',
-    changeBtn: 'बदलें',
-    getAdvisory: 'मौसम व कृषि सलाह पाएं',
-    loading: 'मौसम की जानकारी और सलाह तैयार हो रही है...',
-    waitNote: 'इसमें 3 से 5 सेकंड का समय लगता है',
-    weatherHeader: 'वर्तमान मौसम स्थिति:',
-    temp: 'तापमान',
-    humidity: 'हवा में नमी',
-    rainRisk: 'बारिश की संभावना',
-    wind: 'हवा की गति',
-    advisoryHeader: 'किसान भाइयों के लिए समयोचित सलाह:',
-    replayAudio: 'आवाज फिर से सुनें',
-    checkAnother: 'दूसरे जिले या फसल की सलाह देखें',
-    errorTitle: 'सलाह प्राप्त नहीं हो सकी',
-    errorDesc: 'मौसम की जानकारी प्राप्त करने में असमर्थ रहे, कृपया दोबारा प्रयास करें।',
-    tryAgain: 'पुनः प्रयास करें',
-    backHome: 'होम पेज पर लौटें',
-  },
-  bn: {
-    title: 'আবহাওয়া ও কৃষি পরামর্শ',
-    subtitle: 'আপনার জেলার আবহাওয়া-ভিত্তিক পরামর্শ',
-    selectState: 'রাজ্য নির্বাচন করুন',
-    selectDistrict: 'জেলা নির্বাচন করুন',
-    selectCrop: 'ফসল নির্বাচন করুন',
-    step1Title: 'ধাপ ১: রাজ্য নির্বাচন',
-    step2Title: 'ধাপ ২: জেলা নির্বাচন',
-    step3Title: 'ধাপ ৩: ফসল নির্বাচন',
-    nextBtn: 'পরবর্তী ধাপ',
-    changeBtn: 'পরিবর্তন',
-    getAdvisory: 'পরামর্শ দেখুন',
-    loading: 'আবহাওয়া তথ্য ও পরামর্শ তৈরি হচ্ছে...',
-    waitNote: 'এতে ৩ থেকে ৫ সেকেন্ড সময় লাগবে',
-    weatherHeader: 'বর্তমান আবহাওয়া:',
-    temp: 'তাপমাত্রা',
-    humidity: 'আর্দ্রতা',
-    rainRisk: 'বৃষ্টির সম্ভাবনা',
-    wind: 'বাতাসের গতি',
-    advisoryHeader: 'কৃষকদের জন্য প্রয়োজনীয় পরামর্শ:',
-    replayAudio: 'আবার শুনুন',
-    checkAnother: 'অন্য জেলা বা ফসলের পরামর্শ দেখুন',
-    errorTitle: 'পরামর্শ পাওয়া যায়নি',
-    errorDesc: 'আবহাওয়ার তথ্য পেতে সমস্যা হয়েছে, দয়া করে আবার চেষ্টা করুন।',
-    tryAgain: 'আবার চেষ্টা করুন',
-    backHome: 'হোম পেজে ফিরুন',
-  },
-  en: {
-    title: 'Crop & Weather Advisory',
-    subtitle: 'Hyperlocal forecast & farm advisory',
-    selectState: 'Select State',
-    selectDistrict: 'Select District',
-    selectCrop: 'Select Crop',
-    step1Title: 'Step 1: Select State',
-    step2Title: 'Step 2: Select District',
-    step3Title: 'Step 3: Select Crop',
-    nextBtn: 'Continue',
-    changeBtn: 'Change',
-    getAdvisory: 'Get Farm Advisory',
-    loading: 'Fetching weather and generating advisory...',
-    waitNote: 'This usually takes 3 to 5 seconds',
-    weatherHeader: 'Hyperlocal Weather Conditions:',
-    temp: 'Temperature',
-    humidity: 'Humidity',
-    rainRisk: 'Rain Probability',
-    wind: 'Wind Speed',
-    advisoryHeader: 'Actionable Advice for Farmers:',
-    replayAudio: 'Play Spoken Advice',
-    checkAnother: 'Check Another District / Crop',
-    errorTitle: 'Advisory Incomplete',
-    errorDesc: "Couldn't fetch weather advisory, please try again.",
-    tryAgain: 'Try Again',
-    backHome: 'Return to Home',
-  },
-};
-
 export default function AdvisoryPage() {
-  const [language, setLanguage] = useState<Language>('hi');
+  const { language } = useApp();
+  const t = I18N[language] || I18N.hi;
+
   const [formStep, setFormStep] = useState<'state' | 'district' | 'crop'>('state');
   const [selectedState, setSelectedState] = useState<string>('Maharashtra');
   const [selectedDistrict, setSelectedDistrict] = useState<string>('Nashik');
@@ -128,35 +47,18 @@ export default function AdvisoryPage() {
 
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Restore saved language preference
-  useEffect(() => {
-    const saved = localStorage.getItem('fasalsetu_lang') as Language | null;
-    if (saved && (saved === 'hi' || saved === 'bn' || saved === 'en')) {
-      setLanguage(saved);
-    }
-  }, []);
-
-  const handleLanguageChange = (lang: Language) => {
-    setLanguage(lang);
-    localStorage.setItem('fasalsetu_lang', lang);
-  };
-
-  const t = UI_STRINGS[language] || UI_STRINGS.hi;
-
-  // Available districts based on selected state
-  const currentStateObj = INDIAN_STATES.find(
-    (s) => s.name === selectedState || s.name_hi === selectedState || s.name_bn === selectedState
-  ) || INDIAN_STATES[0];
-
+  // Update district dropdown when state changes
   const handleStateChange = (stateName: string) => {
     setSelectedState(stateName);
-    const matchedState = INDIAN_STATES.find((s) => s.name === stateName);
-    if (matchedState && matchedState.districts.length > 0) {
-      setSelectedDistrict(matchedState.districts[0].name);
+    const foundState = INDIAN_STATES.find((s) => s.name === stateName);
+    if (foundState && foundState.districts.length > 0) {
+      setSelectedDistrict(foundState.districts[0].name);
     }
   };
 
-  // Play audio
+  const currentStateObj =
+    INDIAN_STATES.find((s) => s.name === selectedState) || INDIAN_STATES[0];
+
   const playAudio = (base64Audio: string) => {
     try {
       if (currentAudioRef.current) {
@@ -175,7 +77,6 @@ export default function AdvisoryPage() {
     }
   };
 
-  // Fetch Advisory
   const fetchAdvisory = async () => {
     setIsLoading(true);
     setError(null);
@@ -184,7 +85,9 @@ export default function AdvisoryPage() {
     try {
       const response = await fetch('/api/advisory', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           state: selectedState,
           district: selectedDistrict,
@@ -204,7 +107,7 @@ export default function AdvisoryPage() {
         playAudio(data.audio_base64);
       }
     } catch {
-      setError(t.errorDesc);
+      setError(t.advisory.errorDesc);
     } finally {
       setIsLoading(false);
     }
@@ -219,156 +122,121 @@ export default function AdvisoryPage() {
 
   return (
     <div className="flex flex-col min-h-screen justify-between max-w-md mx-auto w-full px-5 py-6">
-      {/* Top Header with Back Button and Language Switcher */}
-      <header className="pb-5 border-b border-stone-200">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Link
-              href="/"
-              className="w-10 h-10 rounded-lg flex items-center justify-center text-[#111827] hover:bg-stone-200 active:bg-stone-300 transition-colors focus:outline-none focus:ring-2 focus:ring-[#14532d]"
-              aria-label="Back to home"
-            >
-              <ArrowLeft className="w-5 h-5" strokeWidth={2.2} />
-            </Link>
-            <div>
-              <h1 className="font-semibold text-base text-[#111827] leading-none">
-                {t.title}
-              </h1>
-              <span className="text-xs text-[#1f2937] font-semibold">
-                {t.subtitle}
-              </span>
-            </div>
-          </div>
+      {/* Top Header with Back Button and Universal Navbar */}
+      <Navbar
+        showBack
+        backHref="/"
+        title={t.advisory.title}
+        subtitle={t.advisory.subtitle}
+      />
 
-          {/* Native Script Language Switcher with >=44px touch targets & >=8px gap */}
-          <div className="flex items-center gap-2">
-            {(['hi', 'bn', 'en'] as Language[]).map((lang) => {
-              const labels = { hi: 'हिन्दी', bn: 'বাংলা', en: 'EN' };
-              const isSelected = language === lang;
-              return (
-                <button
-                  key={lang}
-                  onClick={() => handleLanguageChange(lang)}
-                  className={`px-3 py-2 rounded-lg text-xs font-bold transition-all min-h-[44px] min-w-[48px] flex items-center justify-center ${
-                    isSelected
-                      ? 'bg-[#14532d] text-white shadow-xs'
-                      : 'bg-stone-200 text-stone-900 hover:bg-stone-300'
-                  }`}
-                  aria-pressed={isSelected}
-                >
-                  {labels[lang]}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content Area */}
+      {/* Main Interactive Container */}
       <main className="flex-1 flex flex-col justify-center py-6">
         {/* Loading State */}
         {isLoading && (
           <div className="text-center py-12 space-y-4">
-            <div className="w-16 h-16 rounded-full bg-emerald-100 text-[#14532d] flex items-center justify-center mx-auto motion-safe:animate-pulse">
+            <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950 text-[#14532d] dark:text-[#22c55e] flex items-center justify-center mx-auto motion-safe:animate-pulse">
               <Sparkles className="w-8 h-8" />
             </div>
             <div className="space-y-1">
-              <h2 className="text-xl font-semibold text-[#111827]">
-                {t.loading}
+              <h2 className="text-xl font-bold text-[#111827] dark:text-[#f9fafb]">
+                {t.advisory.analyzing}
               </h2>
-              <p className="text-sm text-[#1f2937] font-medium">{t.waitNote}</p>
+              <p className="text-sm text-[#1f2937] dark:text-stone-300 font-semibold">
+                {t.advisory.waitNote}
+              </p>
             </div>
           </div>
         )}
 
         {/* Error State */}
         {error && !isLoading && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-center space-y-3">
-            <div className="w-10 h-10 rounded-full bg-red-100 text-red-700 flex items-center justify-center mx-auto">
+          <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl p-5 text-center space-y-3">
+            <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 flex items-center justify-center mx-auto">
               <AlertCircle className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-semibold text-[#111827]">{t.errorTitle}</h3>
-              <p className="text-sm text-red-700 mt-1 font-medium">{error}</p>
+              <h3 className="font-bold text-[#111827] dark:text-[#f9fafb]">{t.advisory.errorTitle}</h3>
+              <p className="text-sm text-red-700 dark:text-red-300 mt-1 font-medium">{error}</p>
             </div>
             <button
-              onClick={handleReset}
-              className="px-5 py-3 rounded-lg bg-[#14532d] text-white font-semibold text-sm hover:bg-[#166534] min-h-[44px]"
+              onClick={() => setError(null)}
+              className="px-5 py-3 rounded-lg bg-[#14532d] dark:bg-[#22c55e] text-white dark:text-stone-950 font-bold text-sm hover:bg-[#166534] min-h-[44px]"
             >
-              {t.tryAgain}
+              {t.common.tryAgain}
             </button>
           </div>
         )}
 
-        {/* Advisory Result State */}
+        {/* Advisory Output State */}
         {advisory && !isLoading && (
-          <div className="space-y-5">
-            {/* Location & Crop Banner */}
-            <div className="bg-white border border-stone-200 rounded-xl p-4 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-stone-900">
-                <MapPin className="w-5 h-5 text-[#14532d]" />
-                <div>
-                  <div className="font-bold text-base leading-tight">
+          <div className="space-y-6">
+            {/* Header: Location & Crop Chip */}
+            <div className="flex items-center justify-between border-b border-stone-200 dark:border-stone-800 pb-3">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-1.5 text-xs text-stone-700 dark:text-stone-300 font-bold">
+                  <MapPin className="w-3.5 h-3.5 text-[#14532d] dark:text-[#22c55e]" />
+                  <span>
                     {advisory.district}, {advisory.state}
-                  </div>
-                  <div className="text-xs text-[#1f2937] font-semibold flex items-center gap-1 mt-0.5">
-                    <Sprout className="w-3.5 h-3.5 text-emerald-700" />
-                    <span>{advisory.crop}</span>
-                  </div>
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 text-base font-bold text-[#111827] dark:text-[#f9fafb]">
+                  <Sprout className="w-4 h-4 text-[#14532d] dark:text-[#22c55e]" />
+                  <span>{advisory.crop}</span>
                 </div>
               </div>
-              <span className="text-xs font-semibold px-2 py-1 bg-stone-100 text-stone-800 rounded-md">
+              <span className="text-[11px] font-bold px-2 py-1 rounded bg-stone-100 dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300">
                 Open-Meteo
               </span>
             </div>
 
-            {/* Hyperlocal Weather Metrics Grid */}
-            <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-4 space-y-3">
+            {/* Weather Metric Cards */}
+            <div className="bg-emerald-50/80 dark:bg-emerald-950/40 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800/80 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-emerald-950">
-                  {t.weatherHeader}
+                <span className="text-xs font-bold text-emerald-950 dark:text-emerald-300">
+                  {t.advisory.weatherConditions}
                 </span>
-                <span className="text-xs text-emerald-900 font-semibold">
+                <span className="text-xs font-semibold text-stone-700 dark:text-stone-300">
                   {advisory.weather_snapshot.weather_description}
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-emerald-950">
-                <div className="bg-white/90 p-2.5 rounded-lg border border-emerald-100 flex items-center gap-2">
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="bg-white/90 dark:bg-[#131f18] p-2.5 rounded-lg border border-emerald-100 dark:border-[#1e3327] flex items-center gap-2">
                   <CloudSun className="w-4 h-4 text-amber-600 shrink-0" />
                   <div>
-                    <div className="text-xs text-stone-700 font-semibold leading-none">{t.temp}</div>
-                    <div className="text-sm font-bold text-stone-950 mt-0.5">
+                    <div className="text-xs text-stone-700 dark:text-stone-400 font-semibold leading-none">{t.advisory.temp}</div>
+                    <div className="text-sm font-bold text-stone-950 dark:text-[#f9fafb] mt-0.5">
                       {advisory.weather_snapshot.temperature_c}°C
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white/90 p-2.5 rounded-lg border border-emerald-100 flex items-center gap-2">
+                <div className="bg-white/90 dark:bg-[#131f18] p-2.5 rounded-lg border border-emerald-100 dark:border-[#1e3327] flex items-center gap-2">
                   <Droplets className="w-4 h-4 text-blue-600 shrink-0" />
                   <div>
-                    <div className="text-xs text-stone-700 font-semibold leading-none">{t.humidity}</div>
-                    <div className="text-sm font-bold text-stone-950 mt-0.5">
+                    <div className="text-xs text-stone-700 dark:text-stone-400 font-semibold leading-none">{t.advisory.humidity}</div>
+                    <div className="text-sm font-bold text-stone-950 dark:text-[#f9fafb] mt-0.5">
                       {advisory.weather_snapshot.humidity_percent}%
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white/90 p-2.5 rounded-lg border border-emerald-100 flex items-center gap-2">
+                <div className="bg-white/90 dark:bg-[#131f18] p-2.5 rounded-lg border border-emerald-100 dark:border-[#1e3327] flex items-center gap-2">
                   <CloudRain className="w-4 h-4 text-sky-600 shrink-0" />
                   <div>
-                    <div className="text-xs text-stone-700 font-semibold leading-none">{t.rainRisk}</div>
-                    <div className="text-sm font-bold text-stone-950 mt-0.5">
+                    <div className="text-xs text-stone-700 dark:text-stone-400 font-semibold leading-none">{t.advisory.rainChance}</div>
+                    <div className="text-sm font-bold text-stone-950 dark:text-[#f9fafb] mt-0.5">
                       {advisory.weather_snapshot.rain_probability_max}%
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white/90 p-2.5 rounded-lg border border-emerald-100 flex items-center gap-2">
+                <div className="bg-white/90 dark:bg-[#131f18] p-2.5 rounded-lg border border-emerald-100 dark:border-[#1e3327] flex items-center gap-2">
                   <Wind className="w-4 h-4 text-teal-600 shrink-0" />
                   <div>
-                    <div className="text-xs text-stone-700 font-semibold leading-none">{t.wind}</div>
-                    <div className="text-sm font-bold text-stone-950 mt-0.5">
+                    <div className="text-xs text-stone-700 dark:text-stone-400 font-semibold leading-none">{t.advisory.wind}</div>
+                    <div className="text-sm font-bold text-stone-950 dark:text-[#f9fafb] mt-0.5">
                       {advisory.weather_snapshot.wind_speed_kmh} km/h
                     </div>
                   </div>
@@ -376,12 +244,12 @@ export default function AdvisoryPage() {
               </div>
             </div>
 
-            {/* Actionable Farmer Advice in Large Typography */}
+            {/* Actionable Farmer Advice */}
             <div className="space-y-2">
-              <h3 className="text-base font-semibold text-[#111827]">
-                {t.advisoryHeader}
+              <h3 className="text-base font-bold text-[#111827] dark:text-[#f9fafb]">
+                {t.advisory.advisoryHeader}
               </h3>
-              <div className="bg-white border border-stone-200 rounded-xl p-4 text-[#111827] text-base leading-relaxed whitespace-pre-line font-medium">
+              <div className="bg-white dark:bg-[#131f18] border border-stone-200 dark:border-[#1e3327] rounded-xl p-4 text-[#111827] dark:text-stone-200 text-base leading-relaxed whitespace-pre-line font-medium shadow-xs">
                 {advisory.advisory_text}
               </div>
             </div>
@@ -390,24 +258,24 @@ export default function AdvisoryPage() {
             {advisory.audio_base64 && (
               <button
                 onClick={() => playAudio(advisory.audio_base64!)}
-                className="w-full min-h-[48px] px-5 py-3 rounded-xl bg-stone-100 hover:bg-stone-200 active:bg-stone-300 border border-stone-300 text-[#111827] font-semibold text-base flex items-center justify-center gap-2.5 transition-colors focus:ring-2 focus:ring-[#14532d]"
+                className="w-full min-h-[48px] px-5 py-3 rounded-xl bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 active:bg-stone-300 border border-stone-300 dark:border-stone-700 text-[#111827] dark:text-[#f9fafb] font-bold text-base flex items-center justify-center gap-2.5 transition-colors focus:ring-2 focus:ring-[#14532d]"
               >
                 <Volume2
-                  className={`w-5 h-5 text-[#14532d] ${
+                  className={`w-5 h-5 text-[#14532d] dark:text-[#22c55e] ${
                     isPlayingAudio ? 'motion-safe:animate-pulse text-emerald-700' : ''
                   }`}
                 />
-                <span>{t.replayAudio}</span>
+                <span>{t.advisory.replayAudio}</span>
               </button>
             )}
 
             {/* Reset / Check Another Button */}
             <button
               onClick={handleReset}
-              className="w-full min-h-[52px] px-5 py-3.5 rounded-xl bg-[#14532d] hover:bg-[#166534] text-white font-medium text-base flex items-center justify-center gap-2.5 transition-colors shadow-xs"
+              className="w-full min-h-[52px] px-5 py-3.5 rounded-xl bg-[#14532d] hover:bg-[#166534] dark:bg-[#22c55e] dark:hover:bg-[#16a34a] text-white dark:text-stone-950 font-bold text-base flex items-center justify-center gap-2.5 transition-colors shadow-xs"
             >
               <RotateCcw className="w-5 h-5" />
-              <span>{t.checkAnother}</span>
+              <span>{t.advisory.checkAnother}</span>
             </button>
           </div>
         )}
@@ -419,11 +287,11 @@ export default function AdvisoryPage() {
             {formStep === 'state' && (
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <span className="text-xs font-bold text-emerald-900 bg-emerald-100 px-2.5 py-1 rounded-md">
-                    {t.step1Title}
+                  <span className="text-xs font-bold text-emerald-900 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-1 rounded-md">
+                    {t.advisory.step1Title}
                   </span>
-                  <h2 className="text-xl font-bold text-[#111827] pt-2">
-                    {t.selectState}
+                  <h2 className="text-xl font-bold text-[#111827] dark:text-[#f9fafb] pt-2">
+                    {t.advisory.selectState}
                   </h2>
                 </div>
 
@@ -431,7 +299,7 @@ export default function AdvisoryPage() {
                   <select
                     value={selectedState}
                     onChange={(e) => handleStateChange(e.target.value)}
-                    className="w-full min-h-[52px] px-4 py-3 rounded-xl bg-white border-2 border-stone-300 text-stone-900 font-semibold text-base focus:ring-2 focus:ring-[#14532d] focus:outline-none"
+                    className="w-full min-h-[52px] px-4 py-3 rounded-xl bg-white dark:bg-[#131f18] border-2 border-stone-300 dark:border-[#1e3327] text-stone-900 dark:text-[#f9fafb] font-bold text-base focus:ring-2 focus:ring-[#14532d] focus:outline-none"
                   >
                     {INDIAN_STATES.map((state) => {
                       const label =
@@ -441,7 +309,7 @@ export default function AdvisoryPage() {
                           ? state.name_bn
                           : state.name;
                       return (
-                        <option key={state.name} value={state.name}>
+                        <option key={state.name} value={state.name} className="bg-white dark:bg-[#131f18] text-stone-900 dark:text-stone-100">
                           {label} ({state.name})
                         </option>
                       );
@@ -451,9 +319,9 @@ export default function AdvisoryPage() {
 
                 <button
                   onClick={() => setFormStep('district')}
-                  className="w-full min-h-[56px] px-6 py-4 rounded-xl bg-[#14532d] hover:bg-[#166534] active:bg-[#0f3d20] text-white font-semibold text-lg flex items-center justify-center gap-3 transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-[#14532d]/30"
+                  className="w-full min-h-[56px] px-6 py-4 rounded-xl bg-[#14532d] hover:bg-[#166534] active:bg-[#0f3d20] dark:bg-[#22c55e] dark:hover:bg-[#16a34a] text-white dark:text-stone-950 font-bold text-lg flex items-center justify-center gap-3 transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-[#14532d]/30"
                 >
-                  <span>{t.nextBtn}</span>
+                  <span>{t.advisory.nextBtn}</span>
                 </button>
               </div>
             )}
@@ -461,24 +329,24 @@ export default function AdvisoryPage() {
             {/* STEP 2: Select District */}
             {formStep === 'district' && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between bg-stone-100 px-3 py-2 rounded-lg border border-stone-200">
-                  <span className="text-xs font-semibold text-stone-900">
+                <div className="flex items-center justify-between bg-stone-100 dark:bg-[#0c1410] px-3 py-2 rounded-lg border border-stone-200 dark:border-stone-800">
+                  <span className="text-xs font-bold text-stone-900 dark:text-stone-300">
                     राज्य: {selectedState}
                   </span>
                   <button
                     onClick={() => setFormStep('state')}
-                    className="text-xs font-bold text-[#14532d] hover:underline px-2 py-1 min-h-[36px]"
+                    className="text-xs font-bold text-[#14532d] dark:text-[#22c55e] hover:underline px-2 py-1 min-h-[36px]"
                   >
-                    {t.changeBtn}
+                    {t.advisory.changeBtn}
                   </button>
                 </div>
 
                 <div className="space-y-1">
-                  <span className="text-xs font-bold text-emerald-900 bg-emerald-100 px-2.5 py-1 rounded-md">
-                    {t.step2Title}
+                  <span className="text-xs font-bold text-emerald-900 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-1 rounded-md">
+                    {t.advisory.step2Title}
                   </span>
-                  <h2 className="text-xl font-bold text-[#111827] pt-2">
-                    {t.selectDistrict}
+                  <h2 className="text-xl font-bold text-[#111827] dark:text-[#f9fafb] pt-2">
+                    {t.advisory.selectDistrict}
                   </h2>
                 </div>
 
@@ -486,7 +354,7 @@ export default function AdvisoryPage() {
                   <select
                     value={selectedDistrict}
                     onChange={(e) => setSelectedDistrict(e.target.value)}
-                    className="w-full min-h-[52px] px-4 py-3 rounded-xl bg-white border-2 border-stone-300 text-stone-900 font-semibold text-base focus:ring-2 focus:ring-[#14532d] focus:outline-none"
+                    className="w-full min-h-[52px] px-4 py-3 rounded-xl bg-white dark:bg-[#131f18] border-2 border-stone-300 dark:border-[#1e3327] text-stone-900 dark:text-[#f9fafb] font-bold text-base focus:ring-2 focus:ring-[#14532d] focus:outline-none"
                   >
                     {currentStateObj.districts.map((district) => {
                       const label =
@@ -496,7 +364,7 @@ export default function AdvisoryPage() {
                           ? district.name_bn
                           : district.name;
                       return (
-                        <option key={district.name} value={district.name}>
+                        <option key={district.name} value={district.name} className="bg-white dark:bg-[#131f18] text-stone-900 dark:text-stone-100">
                           {label} ({district.name})
                         </option>
                       );
@@ -506,9 +374,9 @@ export default function AdvisoryPage() {
 
                 <button
                   onClick={() => setFormStep('crop')}
-                  className="w-full min-h-[56px] px-6 py-4 rounded-xl bg-[#14532d] hover:bg-[#166534] active:bg-[#0f3d20] text-white font-semibold text-lg flex items-center justify-center gap-3 transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-[#14532d]/30"
+                  className="w-full min-h-[56px] px-6 py-4 rounded-xl bg-[#14532d] hover:bg-[#166534] active:bg-[#0f3d20] dark:bg-[#22c55e] dark:hover:bg-[#16a34a] text-white dark:text-stone-950 font-bold text-lg flex items-center justify-center gap-3 transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-[#14532d]/30"
                 >
-                  <span>{t.nextBtn}</span>
+                  <span>{t.advisory.nextBtn}</span>
                 </button>
               </div>
             )}
@@ -516,24 +384,24 @@ export default function AdvisoryPage() {
             {/* STEP 3: Select Crop */}
             {formStep === 'crop' && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between bg-stone-100 px-3 py-2 rounded-lg border border-stone-200">
-                  <span className="text-xs font-semibold text-stone-900">
+                <div className="flex items-center justify-between bg-stone-100 dark:bg-[#0c1410] px-3 py-2 rounded-lg border border-stone-200 dark:border-stone-800">
+                  <span className="text-xs font-bold text-stone-900 dark:text-stone-300">
                     स्थान: {selectedDistrict}, {selectedState}
                   </span>
                   <button
                     onClick={() => setFormStep('district')}
-                    className="text-xs font-bold text-[#14532d] hover:underline px-2 py-1 min-h-[36px]"
+                    className="text-xs font-bold text-[#14532d] dark:text-[#22c55e] hover:underline px-2 py-1 min-h-[36px]"
                   >
-                    {t.changeBtn}
+                    {t.advisory.changeBtn}
                   </button>
                 </div>
 
                 <div className="space-y-1">
-                  <span className="text-xs font-bold text-emerald-900 bg-emerald-100 px-2.5 py-1 rounded-md">
-                    {t.step3Title}
+                  <span className="text-xs font-bold text-emerald-900 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-1 rounded-md">
+                    {t.advisory.step3Title}
                   </span>
-                  <h2 className="text-xl font-bold text-[#111827] pt-2">
-                    {t.selectCrop}
+                  <h2 className="text-xl font-bold text-[#111827] dark:text-[#f9fafb] pt-2">
+                    {t.advisory.selectCrop}
                   </h2>
                 </div>
 
@@ -541,7 +409,7 @@ export default function AdvisoryPage() {
                   <select
                     value={selectedCrop}
                     onChange={(e) => setSelectedCrop(e.target.value)}
-                    className="w-full min-h-[52px] px-4 py-3 rounded-xl bg-white border-2 border-stone-300 text-stone-900 font-semibold text-base focus:ring-2 focus:ring-[#14532d] focus:outline-none"
+                    className="w-full min-h-[52px] px-4 py-3 rounded-xl bg-white dark:bg-[#131f18] border-2 border-stone-300 dark:border-[#1e3327] text-stone-900 dark:text-[#f9fafb] font-bold text-base focus:ring-2 focus:ring-[#14532d] focus:outline-none"
                   >
                     {CROPS_LIST.map((crop) => {
                       const label =
@@ -551,7 +419,7 @@ export default function AdvisoryPage() {
                           ? crop.name_bn
                           : crop.name_en;
                       return (
-                        <option key={crop.id} value={crop.name_en}>
+                        <option key={crop.id} value={crop.name_en} className="bg-white dark:bg-[#131f18] text-stone-900 dark:text-stone-100">
                           {label} ({crop.name_en})
                         </option>
                       );
@@ -562,10 +430,10 @@ export default function AdvisoryPage() {
                 <div className="pt-2">
                   <button
                     onClick={fetchAdvisory}
-                    className="w-full min-h-[56px] px-6 py-4 rounded-xl bg-[#14532d] hover:bg-[#166534] active:bg-[#0f3d20] text-white font-semibold text-lg flex items-center justify-center gap-3 transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-[#14532d]/30"
+                    className="w-full min-h-[56px] px-6 py-4 rounded-xl bg-[#14532d] hover:bg-[#166534] active:bg-[#0f3d20] dark:bg-[#22c55e] dark:hover:bg-[#16a34a] text-white dark:text-stone-950 font-bold text-lg flex items-center justify-center gap-3 transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-[#14532d]/30"
                   >
                     <CloudSun className="w-6 h-6" strokeWidth={2} />
-                    <span>{t.getAdvisory}</span>
+                    <span>{t.advisory.getAdvisory}</span>
                   </button>
                 </div>
               </div>
@@ -575,14 +443,17 @@ export default function AdvisoryPage() {
       </main>
 
       {/* Footer Return Link */}
-      <footer className="pt-4 border-t border-stone-200 text-center">
+      <footer className="pt-4 border-t border-stone-200 dark:border-stone-800 text-center">
         <Link
           href="/"
-          className="text-xs font-medium text-[#14532d] hover:underline inline-flex items-center gap-1"
+          className="text-xs font-bold text-stone-600 dark:text-stone-400 hover:text-stone-950 dark:hover:text-stone-100 transition-colors py-2 px-3 inline-block"
         >
-          &larr; {t.backHome}
+          {t.common.backHome}
         </Link>
       </footer>
+
+      {/* Startup Guidance & Field Audio Recorder Modal */}
+      <StartupGuidanceModal />
     </div>
   );
 }

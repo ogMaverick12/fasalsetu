@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Newsreader, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+import { AppProvider } from "@/context/AppContext";
 
 const newsreader = Newsreader({
   variable: "--font-display",
@@ -41,10 +42,30 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${plusJakarta.variable} ${newsreader.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans bg-[#fafaf9] text-[#111827]">
-        {children}
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const theme = localStorage.getItem('fasalsetu_theme') || 
+                  (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                if (theme === 'dark') {
+                  document.documentElement.classList.add('dark');
+                  document.documentElement.style.colorScheme = 'dark';
+                } else {
+                  document.documentElement.classList.remove('dark');
+                  document.documentElement.style.colorScheme = 'light';
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
+      </head>
+      <body className="min-h-full flex flex-col font-sans bg-[#fafaf9] text-[#111827] dark:bg-[#0b140f] dark:text-[#f9fafb] transition-colors duration-200">
+        <AppProvider>{children}</AppProvider>
       </body>
     </html>
   );
