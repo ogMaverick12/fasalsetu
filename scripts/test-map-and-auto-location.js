@@ -9,7 +9,7 @@ async function runTests() {
   const baseUrl = process.argv[2] || 'http://localhost:3000';
   const artifactDir = 'C:/Users/sreej/.gemini/antigravity/brain/c0542fe5-0896-41ff-a236-7ceb4860c809';
 
-  console.log(`Testing Interactive Map & Auto GPS Location on ${baseUrl}...`);
+  console.log(`Testing Realistic Google Satellite Map & Auto GPS Location on ${baseUrl}...`);
 
   const browser = await puppeteer.launch({
     executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
@@ -46,15 +46,19 @@ async function runTests() {
   // 1. Set simulated Geolocation to Nashik, Maharashtra
   await page.setGeolocation({ latitude: 19.9975, longitude: 73.7898 });
 
-  console.log('1. Loading /advisory in Light Mode (Hindi)...');
+  console.log('1. Loading /advisory with Realistic Map in Light Mode (Hindi)...');
   await page.goto(`${baseUrl}/advisory`, { waitUntil: 'networkidle2' });
-  await sleep(1000);
+  await sleep(1500);
+
+  // Verify Leaflet Map Container loads
+  await page.waitForSelector('#realistic-leaflet-map', { timeout: 10000 });
+  console.log('Realistic Leaflet Map container rendered successfully!');
 
   // 2. Click Auto-Detect GPS Button
   console.log('2. Clicking Auto-Detect GPS Button (#auto-detect-gps-btn)...');
   await page.waitForSelector('#auto-detect-gps-btn', { timeout: 5000 });
   await page.click('#auto-detect-gps-btn');
-  await sleep(1500);
+  await sleep(2500);
 
   // Verify detected location banner
   await page.waitForSelector('#detected-location-banner', { timeout: 5000 });
@@ -66,17 +70,24 @@ async function runTests() {
   });
   console.log('Saved feature_map_gps_detected_light.png');
 
-  // 3. Test Clicking on Map Surface (e.g. East / Hooghly area: SVG click around 270, 230)
-  console.log('3. Clicking on Map surface at Eastern coordinates...');
-  const mapSvg = await page.waitForSelector('#india-district-map-svg', { timeout: 5000 });
-  if (mapSvg) {
-    await mapSvg.scrollIntoView();
+  // 3. Test Layer Switching: Switch to Google Roadmap
+  console.log('3. Switching to Google Roadmap Layer (#map-layer-road-btn)...');
+  const roadBtn = await page.$('#map-layer-road-btn');
+  if (roadBtn) {
+    await roadBtn.click();
+    await sleep(1000);
+  }
+
+  // Click on the real Leaflet map
+  const mapCanvas = await page.$('#realistic-leaflet-map');
+  if (mapCanvas) {
+    await mapCanvas.scrollIntoView();
     await sleep(300);
-    const box = await mapSvg.boundingBox();
+    const box = await mapCanvas.boundingBox();
     if (box) {
-      // Click at ~65% width, ~48% height (Eastern India / Bengal region)
-      await page.mouse.click(box.x + box.width * 0.65, box.y + box.height * 0.48);
-      await sleep(1000);
+      // Click near center
+      await page.mouse.click(box.x + box.width * 0.55, box.y + box.height * 0.45);
+      await sleep(2000);
     }
   }
 
@@ -99,20 +110,25 @@ async function runTests() {
   });
   console.log('Saved feature_map_instant_advisory_result.png');
 
-  // 5. Test Dark Mode & Bengali
+  // 5. Test Dark Mode & Bengali with Realistic Satellite Map
   console.log('5. Resetting and switching to Bengali & Forest Midnight Dark Mode...');
   await page.click('#reset-advisory-btn');
-  await sleep(800);
+  await sleep(1000);
 
   // Switch to Bengali
-  const bnBtn = await page.$('#lang-btn-bn');
+  const bnBtn = await page.waitForSelector('#lang-btn-bn', { timeout: 5000 });
   if (bnBtn) await bnBtn.click();
-  await sleep(600);
+  await sleep(800);
 
   // Switch to Dark Mode
-  const themeBtn = await page.$('#theme-toggle-btn');
+  const themeBtn = await page.waitForSelector('#theme-toggle-btn', { timeout: 5000 });
   if (themeBtn) await themeBtn.click();
-  await sleep(600);
+  await sleep(800);
+
+  // Switch back to Satellite
+  const satBtn = await page.$('#map-layer-satellite-btn');
+  if (satBtn) await satBtn.click();
+  await sleep(1200);
 
   await page.screenshot({
     path: path.join(artifactDir, 'feature_map_bengali_dark.png'),
@@ -123,7 +139,7 @@ async function runTests() {
   console.log('6. Switching to Manual List mode tab (#tab-location-manual)...');
   await page.waitForSelector('#tab-location-manual', { timeout: 5000 });
   await page.click('#tab-location-manual');
-  await sleep(600);
+  await sleep(800);
 
   await page.screenshot({
     path: path.join(artifactDir, 'feature_advisory_manual_tab.png'),
@@ -131,7 +147,7 @@ async function runTests() {
   console.log('Saved feature_advisory_manual_tab.png');
 
   await browser.close();
-  console.log('All Map & Auto-Location tests completed successfully!');
+  console.log('All Realistic Map & Accurate Geocoding tests completed successfully!');
 }
 
 runTests().catch((err) => {

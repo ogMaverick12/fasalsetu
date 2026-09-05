@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import {
   CloudSun,
   Droplets,
@@ -18,20 +19,30 @@ import {
   Map as MapIcon,
   CheckCircle2,
   ArrowRight,
-  Compass,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { I18N } from '@/lib/i18n';
 import Navbar from '@/components/Navbar';
 import StartupGuidanceModal from '@/components/StartupGuidanceModal';
-import IndiaDistrictMap from '@/components/IndiaDistrictMap';
 import {
   INDIAN_STATES,
   CROPS_LIST,
   findNearestDistrict,
   reverseGeocodeCoords,
+  type PreciseGeocodeResult,
 } from '@/lib/geo-india';
 import type { WeatherSnapshot } from '@/lib/weather';
+
+// Dynamically import RealisticFarmMap with Leaflet (SSR disabled to ensure 100% browser compatibility)
+const RealisticFarmMap = dynamic(() => import('@/components/RealisticFarmMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full aspect-4/3 rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-100 dark:bg-stone-900 flex items-center justify-center text-stone-500 font-bold text-xs gap-2">
+      <Sparkles className="w-4 h-4 animate-spin text-emerald-600" />
+      <span>नक्शा लोड हो रहा है... (Loading Real Map...)</span>
+    </div>
+  ),
+});
 
 interface AdvisoryResult {
   state: string;
@@ -48,7 +59,7 @@ export default function AdvisoryPage() {
   const { language } = useApp();
   const t = I18N[language] || I18N.hi;
 
-  // Mode: 'auto' (Map + GPS) vs 'manual' (Step-by-step dropdowns)
+  // Mode: 'auto' (Realistic Google/OSM Map + GPS) vs 'manual' (Step-by-step dropdowns)
   const [locationMode, setLocationMode] = useState<'auto' | 'manual'>('auto');
 
   // Progressive Disclosure Form Step
@@ -65,7 +76,9 @@ export default function AdvisoryPage() {
   const [geoError, setGeoError] = useState<string | null>(null);
   const [detectedLocationInfo, setDetectedLocationInfo] = useState<{
     placeName?: string;
+    displayName?: string;
     distanceKm?: number;
+    isApproximate?: boolean;
     source: 'gps' | 'map';
   } | null>(null);
 
@@ -107,11 +120,13 @@ export default function AdvisoryPage() {
 
         try {
           const res = await reverseGeocodeCoords(latitude, longitude);
-          setSelectedState(res.matchedState.name);
-          setSelectedDistrict(res.matchedDistrict.name);
+          setSelectedState(res.state);
+          setSelectedDistrict(res.district);
           setDetectedLocationInfo({
-            placeName: res.placeName || res.detectedDistrictName,
-            distanceKm: res.distanceKm,
+            placeName: res.block || res.village,
+            displayName: res.displayName,
+            distanceKm: res.distanceToHubKm,
+            isApproximate: res.isApproximateFallback,
             source: 'gps',
           });
         } catch {
@@ -135,12 +150,16 @@ export default function AdvisoryPage() {
     );
   };
 
-  // Map Click / District Select Handler
-  const handleMapSelectDistrict = (stateName: string, districtName: string, distanceKm?: number) => {
-    setSelectedState(stateName);
-    setSelectedDistrict(districtName);
+  // Realistic Map Location Selected Handler (Click or Drag Marker)
+  const handleRealisticLocationSelect = (geo: PreciseGeocodeResult) => {
+    setSelectedState(geo.state);
+    setSelectedDistrict(geo.district);
+    setUserCoords({ lat: geo.lat, lon: geo.lon });
     setDetectedLocationInfo({
-      distanceKm: distanceKm ?? 0,
+      placeName: geo.block || geo.village,
+      displayName: geo.displayName,
+      distanceKm: geo.distanceToHubKm,
+      isApproximate: geo.isApproximateFallback,
       source: 'map',
     });
     setGeoError(null);
@@ -165,7 +184,7 @@ export default function AdvisoryPage() {
     }
   };
 
-  // Fetch Advisory API
+  // Fetch Advisory API with precise GPS coordinates if available
   const fetchAdvisory = async (overrideCrop?: string) => {
     setIsLoading(true);
     setError(null);
@@ -184,6 +203,8 @@ export default function AdvisoryPage() {
           district: selectedDistrict,
           crop_type: cropToUse,
           language,
+          lat: userCoords?.lat,
+          lon: userCoords?.lon,
         }),
       });
 
@@ -270,6 +291,7 @@ export default function AdvisoryPage() {
                 <div className="flex items-center gap-1.5 text-xs text-stone-700 dark:text-stone-300 font-bold">
                   <MapPin className="w-3.5 h-3.5 text-[#14532d] dark:text-[#22c55e]" />
                   <span>
+                    {detectedLocationInfo?.placeName ? `${detectedLocationInfo.placeName}, ` : ''}
                     {advisory.district}, {advisory.state}
                   </span>
                 </div>
@@ -386,7 +408,7 @@ export default function AdvisoryPage() {
         {/* Location Selection & Progressive Flow */}
         {!isLoading && !advisory && !error && (
           <div className="space-y-4">
-            {/* Mode Switcher Tabs: Auto GPS & Map vs Manual List */}
+            {/* Mode Switcher Tabs: Real Map + Auto GPS vs Manual List */}
             {formStep !== 'crop' && (
               <div className="flex bg-stone-100 dark:bg-[#131f18] p-1 rounded-xl border border-stone-200 dark:border-[#1e3327]">
                 <button
@@ -421,9 +443,9 @@ export default function AdvisoryPage() {
               </div>
             )}
 
-            {/* OPTION 1: AUTO GPS & INTERACTIVE MAP VIEW */}
+            {/* OPTION 1: REALISTIC INTERACTIVE MAP & AUTO GPS */}
             {locationMode === 'auto' && formStep !== 'crop' && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {/* 1-Click Auto-Detect GPS Button */}
                 <button
                   type="button"
@@ -452,12 +474,13 @@ export default function AdvisoryPage() {
                   </div>
                 )}
 
-                {/* Interactive India Map */}
-                <IndiaDistrictMap
+                {/* Realistic Google / Satellite Map */}
+                <RealisticFarmMap
+                  initialLat={userCoords?.lat || 20.5937}
+                  initialLon={userCoords?.lon || 78.9629}
                   selectedState={selectedState}
                   selectedDistrict={selectedDistrict}
-                  onSelectDistrict={handleMapSelectDistrict}
-                  userCoords={userCoords}
+                  onLocationSelect={handleRealisticLocationSelect}
                   language={language}
                 />
 
@@ -476,21 +499,20 @@ export default function AdvisoryPage() {
                         {selectedDistrict}, {selectedState}
                       </h3>
                       {detectedLocationInfo?.placeName && (
-                        <p className="text-xs font-medium text-stone-600 dark:text-stone-400">
-                          {t.advisory.approxLocation}: {detectedLocationInfo.placeName}
+                        <p className="text-xs font-bold text-emerald-800 dark:text-emerald-400">
+                          📍 {language === 'bn' ? 'ব্লক / এলাকা:' : language === 'hi' ? 'ब्लॉक / क्षेत्र:' : 'Block / Area:'}{' '}
+                          <span className="underline">{detectedLocationInfo.placeName}</span>
                         </p>
                       )}
-                      {detectedLocationInfo?.distanceKm !== undefined &&
-                        detectedLocationInfo.distanceKm > 0 && (
-                          <p className="text-xs font-bold text-emerald-800 dark:text-emerald-400">
-                            {t.advisory.nearestDistrict} {detectedLocationInfo.distanceKm}{' '}
-                            {t.advisory.distanceKm}
-                          </p>
-                        )}
+                      {userCoords && (
+                        <p className="text-[11px] font-semibold text-stone-500 dark:text-stone-400">
+                          GPS: {userCoords.lat.toFixed(4)}°N, {userCoords.lon.toFixed(4)}°E
+                        </p>
+                      )}
                     </div>
 
                     <span className="text-[11px] font-bold px-2 py-1 rounded bg-white dark:bg-[#1e3327] border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300">
-                      {detectedLocationInfo?.source === 'gps' ? 'GPS Active' : 'Map Pin'}
+                      {detectedLocationInfo?.source === 'gps' ? 'GPS Active' : 'Real Map Pin'}
                     </span>
                   </div>
 

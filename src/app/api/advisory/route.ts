@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { state, district, crop_type, language = 'hi' } = body;
+    const { state, district, crop_type, language = 'hi', lat: inputLat, lon: inputLon } = body;
 
     if (!state || !district) {
       return NextResponse.json(
@@ -18,11 +18,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Geocode state/district to approximate coordinates
-    const { lat, lon } = getDistrictCoordinates(state, district);
+    // 1. Determine coordinates: use exact GPS/pin coords if provided, otherwise geocode from state/district
+    let targetLat = typeof inputLat === 'number' && !isNaN(inputLat) ? inputLat : null;
+    let targetLon = typeof inputLon === 'number' && !isNaN(inputLon) ? inputLon : null;
 
-    // 2. Fetch hyperlocal real-time and forecast weather from Open-Meteo
-    const weatherSnapshot = await fetchHyperlocalWeather(lat, lon);
+    if (targetLat === null || targetLon === null) {
+      const coords = getDistrictCoordinates(state, district);
+      targetLat = coords.lat;
+      targetLon = coords.lon;
+    }
+
+    // 2. Fetch hyperlocal real-time and forecast weather from Open-Meteo for exact location
+    const weatherSnapshot = await fetchHyperlocalWeather(targetLat, targetLon);
 
     // 3. Generate localized agronomic advisory with Gemini 2.5 Flash
     const cropName = crop_type || 'General Crop';

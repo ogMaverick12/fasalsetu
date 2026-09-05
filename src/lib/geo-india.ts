@@ -298,33 +298,43 @@ export function findNearestDistrict(lat: number, lon: number): NearestDistrictRe
   };
 }
 
+export interface PreciseGeocodeResult {
+  lat: number;
+  lon: number;
+  state: string;
+  state_hi?: string;
+  state_bn?: string;
+  district: string;
+  district_hi?: string;
+  district_bn?: string;
+  block?: string;
+  village?: string;
+  displayName: string;
+  isApproximateFallback: boolean;
+  distanceToHubKm?: number;
+}
+
 /**
- * Reverse-geocode latitude and longitude using free OpenStreetMap Nominatim API,
- * with safety timeout and fallback to nearest district matching.
+ * Reverse-geocode latitude and longitude with multi-source fallback
+ * (Nominatim jsonv2 + BigDataCloud Client Reverse Geocoder + nearest math)
+ * Accurately extracts the real State, District, and Village/Block.
  */
 export async function reverseGeocodeCoords(
   lat: number,
   lon: number
-): Promise<{
-  placeName?: string;
-  detectedDistrictName?: string;
-  detectedStateName?: string;
-  matchedState: StateInfo;
-  matchedDistrict: DistrictCoord;
-  distanceKm: number;
-}> {
-  const nearest = findNearestDistrict(lat, lon);
-
+): Promise<PreciseGeocodeResult> {
+  // Provider 1: OpenStreetMap Nominatim jsonv2 with zoom 14 for precise village, block & district
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2500);
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
 
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`,
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=14&addressdetails=1`,
       {
         signal: controller.signal,
         headers: {
           'User-Agent': 'FasalSetu-AgriApp/1.0',
+          'Accept-Language': 'en,hi,bn',
         },
       }
     );
@@ -333,53 +343,123 @@ export async function reverseGeocodeCoords(
     if (res.ok) {
       const data = await res.json();
       const addr = data.address || {};
-      const detectedDistrict = addr.state_district || addr.county || addr.district || addr.city;
-      const detectedState = addr.state;
-      const placeName = addr.village || addr.town || addr.city || addr.suburb || addr.county;
 
-      if (detectedState) {
-        const matchingState = INDIAN_STATES.find(
+      const detectedState = addr.state || '';
+      const detectedDistrict =
+        addr.state_district || addr.district || addr.county || addr.city || '';
+      const detectedBlock =
+        addr.subdistrict || addr.taluk || addr.tehsil || addr.county || '';
+      const detectedVillage =
+        addr.village || addr.town || addr.city || addr.suburb || addr.neighbourhood || '';
+
+      if (detectedState && detectedDistrict) {
+        // Clean district string (remove " District", " Division", etc.)
+        const cleanDistrict = detectedDistrict
+          .replace(/\s*district\s*/gi, '')
+          .replace(/\s*division\s*/gi, '')
+          .trim();
+        const cleanState = detectedState.trim();
+
+        // Check if we have native translations in INDIAN_STATES
+        const knownState = INDIAN_STATES.find(
           (s) =>
-            s.name.toLowerCase().includes(detectedState.toLowerCase()) ||
-            detectedState.toLowerCase().includes(s.name.toLowerCase())
+            s.name.toLowerCase() === cleanState.toLowerCase() ||
+            cleanState.toLowerCase().includes(s.name.toLowerCase()) ||
+            s.name.toLowerCase().includes(cleanState.toLowerCase())
         );
-        if (matchingState) {
-          if (detectedDistrict) {
-            const matchingDistrict = matchingState.districts.find(
-              (d) =>
-                d.name.toLowerCase().includes(detectedDistrict.toLowerCase()) ||
-                detectedDistrict.toLowerCase().includes(d.name.toLowerCase())
-            );
-            if (matchingDistrict) {
-              return {
-                placeName,
-                detectedDistrictName: detectedDistrict,
-                detectedStateName: detectedState,
-                matchedState: matchingState,
-                matchedDistrict: matchingDistrict,
-                distanceKm: calculateDistanceKm(lat, lon, matchingDistrict.lat, matchingDistrict.lon),
-              };
-            }
-          }
-        }
-      }
 
-      return {
-        placeName,
-        detectedDistrictName: detectedDistrict,
-        detectedStateName: detectedState,
-        matchedState: nearest.state,
-        matchedDistrict: nearest.district,
-        distanceKm: nearest.distanceKm,
-      };
+        const knownDistrict = knownState?.districts.find(
+          (d) =>
+            d.name.toLowerCase() === cleanDistrict.toLowerCase() ||
+            cleanDistrict.toLowerCase().includes(d.name.toLowerCase())
+        );
+
+        return {
+          lat,
+          lon,
+          state: knownState ? knownState.name : cleanState,
+          state_hi: knownState?.name_hi,
+          state_bn: knownState?.name_bn,
+          district: knownDistrict ? knownDistrict.name : cleanDistrict,
+          district_hi: knownDistrict?.name_hi,
+          district_bn: knownDistrict?.name_bn,
+          block: detectedBlock ? detectedBlock.trim() : undefined,
+          village: detectedVillage ? detectedVillage.trim() : undefined,
+          displayName: data.display_name || `${cleanDistrict}, ${cleanState}`,
+          isApproximateFallback: false,
+        };
+      }
     }
-  } catch {
-    // Fallback cleanly to nearest math
+  } catch (err) {
+    console.warn('[Nominatim Geocode Warn]:', err);
   }
 
+  // Provider 2: BigDataCloud Free Client Reverse Geocoder (Keyless & reliable)
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+    const res = await fetch(
+      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const bdcData = await res.json();
+      const bdcState = (bdcData.principalSubdivision || '').trim();
+      const adminList = bdcData.localityInfo?.administrative || [];
+      const bdcDistrictObj =
+        adminList.find((a: any) => a.adminLevel === 4 || a.adminLevel === 5 || a.adminLevel === 3) ||
+        adminList[1];
+      const bdcDistrict = (bdcDistrictObj?.name || bdcData.city || '').replace(/\s*district\s*/gi, '').trim();
+      const bdcLocality = (bdcData.locality || '').trim();
+
+      if (bdcState && bdcDistrict) {
+        const knownState = INDIAN_STATES.find(
+          (s) =>
+            s.name.toLowerCase() === bdcState.toLowerCase() ||
+            bdcState.toLowerCase().includes(s.name.toLowerCase())
+        );
+
+        const knownDistrict = knownState?.districts.find(
+          (d) =>
+            d.name.toLowerCase() === bdcDistrict.toLowerCase() ||
+            bdcDistrict.toLowerCase().includes(d.name.toLowerCase())
+        );
+
+        return {
+          lat,
+          lon,
+          state: knownState ? knownState.name : bdcState,
+          state_hi: knownState?.name_hi,
+          state_bn: knownState?.name_bn,
+          district: knownDistrict ? knownDistrict.name : bdcDistrict,
+          district_hi: knownDistrict?.name_hi,
+          district_bn: knownDistrict?.name_bn,
+          village: bdcLocality || undefined,
+          displayName: `${bdcLocality ? bdcLocality + ', ' : ''}${bdcDistrict}, ${bdcState}`,
+          isApproximateFallback: false,
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('[BigDataCloud Geocode Warn]:', err);
+  }
+
+  // Provider 3: Mathematical Haversine Nearest Agricultural Hub (Offline Fallback)
+  const nearest = findNearestDistrict(lat, lon);
   return {
-    matchedState: nearest.state,
-    matchedDistrict: nearest.district,
-    distanceKm: nearest.distanceKm,
+    lat,
+    lon,
+    state: nearest.state.name,
+    state_hi: nearest.state.name_hi,
+    state_bn: nearest.state.name_bn,
+    district: nearest.district.name,
+    district_hi: nearest.district.name_hi,
+    district_bn: nearest.district.name_bn,
+    displayName: `${nearest.district.name}, ${nearest.state.name}`,
+    isApproximateFallback: true,
+    distanceToHubKm: nearest.distanceKm,
   };
 }
