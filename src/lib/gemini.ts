@@ -472,19 +472,21 @@ export async function generateSpokenAudio(
   const ai = new GoogleGenAI({ apiKey });
 
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: `Read the following crop advice aloud clearly and gently for an Indian farmer: "${text}"`,
-      config: {
-        responseModalities: ['AUDIO'],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: {
-              voiceName: language === 'hi' || language === 'bn' ? 'Puck' : 'Aoede',
+    const response = await callWithRetry(async () => {
+      return await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `Read the following crop advice aloud clearly and gently for an Indian farmer: "${text}"`,
+        config: {
+          responseModalities: ['AUDIO'],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: {
+                voiceName: language === 'hi' || language === 'bn' ? 'Puck' : 'Aoede',
+              },
             },
           },
         },
-      },
+      });
     });
 
     const candidate = response.candidates?.[0];

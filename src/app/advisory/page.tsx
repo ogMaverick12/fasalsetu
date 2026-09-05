@@ -38,6 +38,11 @@ const UI_STRINGS = {
     selectState: 'अपना राज्य चुनें',
     selectDistrict: 'अपना जिला चुनें',
     selectCrop: 'फसल चुनें',
+    step1Title: 'कदम 1: राज्य चुनें',
+    step2Title: 'कदम 2: जिला चुनें',
+    step3Title: 'कदम 3: फसल चुनें',
+    nextBtn: 'आगे बढ़ें',
+    changeBtn: 'बदलें',
     getAdvisory: 'मौसम व कृषि सलाह पाएं',
     loading: 'मौसम की जानकारी और सलाह तैयार हो रही है...',
     waitNote: 'इसमें 3 से 5 सेकंड का समय लगता है',
@@ -60,6 +65,11 @@ const UI_STRINGS = {
     selectState: 'রাজ্য নির্বাচন করুন',
     selectDistrict: 'জেলা নির্বাচন করুন',
     selectCrop: 'ফসল নির্বাচন করুন',
+    step1Title: 'ধাপ ১: রাজ্য নির্বাচন',
+    step2Title: 'ধাপ ২: জেলা নির্বাচন',
+    step3Title: 'ধাপ ৩: ফসল নির্বাচন',
+    nextBtn: 'পরবর্তী ধাপ',
+    changeBtn: 'পরিবর্তন',
     getAdvisory: 'পরামর্শ দেখুন',
     loading: 'আবহাওয়া তথ্য ও পরামর্শ তৈরি হচ্ছে...',
     waitNote: 'এতে ৩ থেকে ৫ সেকেন্ড সময় লাগবে',
@@ -82,6 +92,11 @@ const UI_STRINGS = {
     selectState: 'Select State',
     selectDistrict: 'Select District',
     selectCrop: 'Select Crop',
+    step1Title: 'Step 1: Select State',
+    step2Title: 'Step 2: Select District',
+    step3Title: 'Step 3: Select Crop',
+    nextBtn: 'Continue',
+    changeBtn: 'Change',
     getAdvisory: 'Get Farm Advisory',
     loading: 'Fetching weather and generating advisory...',
     waitNote: 'This usually takes 3 to 5 seconds',
@@ -102,6 +117,7 @@ const UI_STRINGS = {
 
 export default function AdvisoryPage() {
   const [language, setLanguage] = useState<Language>('hi');
+  const [formStep, setFormStep] = useState<'state' | 'district' | 'crop'>('state');
   const [selectedState, setSelectedState] = useState<string>('Maharashtra');
   const [selectedDistrict, setSelectedDistrict] = useState<string>('Nashik');
   const [selectedCrop, setSelectedCrop] = useState<string>('Tomato');
@@ -197,6 +213,7 @@ export default function AdvisoryPage() {
   const handleReset = () => {
     setAdvisory(null);
     setError(null);
+    setFormStep('state');
     if (currentAudioRef.current) currentAudioRef.current.pause();
   };
 
@@ -217,14 +234,14 @@ export default function AdvisoryPage() {
               <h1 className="font-semibold text-base text-[#111827] leading-none">
                 {t.title}
               </h1>
-              <span className="text-xs text-[#4b5563] font-medium">
+              <span className="text-xs text-[#1f2937] font-semibold">
                 {t.subtitle}
               </span>
             </div>
           </div>
 
-          {/* Native Script Language Switcher */}
-          <div className="flex items-center bg-stone-200/80 p-0.5 rounded-lg">
+          {/* Native Script Language Switcher with >=44px touch targets & >=8px gap */}
+          <div className="flex items-center gap-2">
             {(['hi', 'bn', 'en'] as Language[]).map((lang) => {
               const labels = { hi: 'हिन्दी', bn: 'বাংলা', en: 'EN' };
               const isSelected = language === lang;
@@ -232,10 +249,10 @@ export default function AdvisoryPage() {
                 <button
                   key={lang}
                   onClick={() => handleLanguageChange(lang)}
-                  className={`px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all min-h-[36px] ${
+                  className={`px-3 py-2 rounded-lg text-xs font-bold transition-all min-h-[44px] min-w-[48px] flex items-center justify-center ${
                     isSelected
                       ? 'bg-[#14532d] text-white shadow-xs'
-                      : 'text-stone-700 hover:text-stone-900'
+                      : 'bg-stone-200 text-stone-900 hover:bg-stone-300'
                   }`}
                   aria-pressed={isSelected}
                 >
@@ -252,14 +269,14 @@ export default function AdvisoryPage() {
         {/* Loading State */}
         {isLoading && (
           <div className="text-center py-12 space-y-4">
-            <div className="w-16 h-16 rounded-full bg-emerald-100 text-[#14532d] flex items-center justify-center mx-auto animate-pulse">
+            <div className="w-16 h-16 rounded-full bg-emerald-100 text-[#14532d] flex items-center justify-center mx-auto motion-safe:animate-pulse">
               <Sparkles className="w-8 h-8" />
             </div>
             <div className="space-y-1">
               <h2 className="text-xl font-semibold text-[#111827]">
                 {t.loading}
               </h2>
-              <p className="text-sm text-[#4b5563]">{t.waitNote}</p>
+              <p className="text-sm text-[#1f2937] font-medium">{t.waitNote}</p>
             </div>
           </div>
         )}
@@ -272,11 +289,11 @@ export default function AdvisoryPage() {
             </div>
             <div>
               <h3 className="font-semibold text-[#111827]">{t.errorTitle}</h3>
-              <p className="text-sm text-red-700 mt-1">{error}</p>
+              <p className="text-sm text-red-700 mt-1 font-medium">{error}</p>
             </div>
             <button
               onClick={handleReset}
-              className="px-5 py-2.5 rounded-lg bg-[#14532d] text-white font-medium text-sm hover:bg-[#166534]"
+              className="px-5 py-3 rounded-lg bg-[#14532d] text-white font-semibold text-sm hover:bg-[#166534] min-h-[44px]"
             >
               {t.tryAgain}
             </button>
@@ -288,19 +305,19 @@ export default function AdvisoryPage() {
           <div className="space-y-5">
             {/* Location & Crop Banner */}
             <div className="bg-white border border-stone-200 rounded-xl p-4 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-stone-800">
+              <div className="flex items-center gap-2 text-stone-900">
                 <MapPin className="w-5 h-5 text-[#14532d]" />
                 <div>
                   <div className="font-bold text-base leading-tight">
                     {advisory.district}, {advisory.state}
                   </div>
-                  <div className="text-xs text-[#4b5563] flex items-center gap-1 mt-0.5">
+                  <div className="text-xs text-[#1f2937] font-semibold flex items-center gap-1 mt-0.5">
                     <Sprout className="w-3.5 h-3.5 text-emerald-700" />
                     <span>{advisory.crop}</span>
                   </div>
                 </div>
               </div>
-              <span className="text-xs font-semibold px-2 py-1 bg-stone-100 text-stone-700 rounded-md">
+              <span className="text-xs font-semibold px-2 py-1 bg-stone-100 text-stone-800 rounded-md">
                 Open-Meteo
               </span>
             </div>
@@ -308,10 +325,10 @@ export default function AdvisoryPage() {
             {/* Hyperlocal Weather Metrics Grid */}
             <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-950">
+                <span className="text-xs font-bold text-emerald-950">
                   {t.weatherHeader}
                 </span>
-                <span className="text-xs text-emerald-800 font-medium">
+                <span className="text-xs text-emerald-900 font-semibold">
                   {advisory.weather_snapshot.weather_description}
                 </span>
               </div>
@@ -320,8 +337,8 @@ export default function AdvisoryPage() {
                 <div className="bg-white/90 p-2.5 rounded-lg border border-emerald-100 flex items-center gap-2">
                   <CloudSun className="w-4 h-4 text-amber-600 shrink-0" />
                   <div>
-                    <div className="text-xs text-stone-500 leading-none">{t.temp}</div>
-                    <div className="text-sm font-bold mt-0.5">
+                    <div className="text-xs text-stone-700 font-semibold leading-none">{t.temp}</div>
+                    <div className="text-sm font-bold text-stone-950 mt-0.5">
                       {advisory.weather_snapshot.temperature_c}°C
                     </div>
                   </div>
@@ -330,8 +347,8 @@ export default function AdvisoryPage() {
                 <div className="bg-white/90 p-2.5 rounded-lg border border-emerald-100 flex items-center gap-2">
                   <Droplets className="w-4 h-4 text-blue-600 shrink-0" />
                   <div>
-                    <div className="text-xs text-stone-500 leading-none">{t.humidity}</div>
-                    <div className="text-sm font-bold mt-0.5">
+                    <div className="text-xs text-stone-700 font-semibold leading-none">{t.humidity}</div>
+                    <div className="text-sm font-bold text-stone-950 mt-0.5">
                       {advisory.weather_snapshot.humidity_percent}%
                     </div>
                   </div>
@@ -340,8 +357,8 @@ export default function AdvisoryPage() {
                 <div className="bg-white/90 p-2.5 rounded-lg border border-emerald-100 flex items-center gap-2">
                   <CloudRain className="w-4 h-4 text-sky-600 shrink-0" />
                   <div>
-                    <div className="text-xs text-stone-500 leading-none">{t.rainRisk}</div>
-                    <div className="text-sm font-bold mt-0.5">
+                    <div className="text-xs text-stone-700 font-semibold leading-none">{t.rainRisk}</div>
+                    <div className="text-sm font-bold text-stone-950 mt-0.5">
                       {advisory.weather_snapshot.rain_probability_max}%
                     </div>
                   </div>
@@ -350,8 +367,8 @@ export default function AdvisoryPage() {
                 <div className="bg-white/90 p-2.5 rounded-lg border border-emerald-100 flex items-center gap-2">
                   <Wind className="w-4 h-4 text-teal-600 shrink-0" />
                   <div>
-                    <div className="text-xs text-stone-500 leading-none">{t.wind}</div>
-                    <div className="text-sm font-bold mt-0.5">
+                    <div className="text-xs text-stone-700 font-semibold leading-none">{t.wind}</div>
+                    <div className="text-sm font-bold text-stone-950 mt-0.5">
                       {advisory.weather_snapshot.wind_speed_kmh} km/h
                     </div>
                   </div>
@@ -364,7 +381,7 @@ export default function AdvisoryPage() {
               <h3 className="text-base font-semibold text-[#111827]">
                 {t.advisoryHeader}
               </h3>
-              <div className="bg-white border border-stone-200 rounded-xl p-4 text-[#1f2937] text-base leading-relaxed whitespace-pre-line">
+              <div className="bg-white border border-stone-200 rounded-xl p-4 text-[#111827] text-base leading-relaxed whitespace-pre-line font-medium">
                 {advisory.advisory_text}
               </div>
             </div>
@@ -373,11 +390,11 @@ export default function AdvisoryPage() {
             {advisory.audio_base64 && (
               <button
                 onClick={() => playAudio(advisory.audio_base64!)}
-                className="w-full min-h-[48px] px-5 py-3 rounded-xl bg-stone-100 hover:bg-stone-200 active:bg-stone-300 border border-stone-300 text-[#111827] font-medium text-base flex items-center justify-center gap-2.5 transition-colors focus:ring-2 focus:ring-[#14532d]"
+                className="w-full min-h-[48px] px-5 py-3 rounded-xl bg-stone-100 hover:bg-stone-200 active:bg-stone-300 border border-stone-300 text-[#111827] font-semibold text-base flex items-center justify-center gap-2.5 transition-colors focus:ring-2 focus:ring-[#14532d]"
               >
                 <Volume2
                   className={`w-5 h-5 text-[#14532d] ${
-                    isPlayingAudio ? 'animate-bounce' : ''
+                    isPlayingAudio ? 'motion-safe:animate-pulse text-emerald-700' : ''
                   }`}
                 />
                 <span>{t.replayAudio}</span>
@@ -395,97 +412,164 @@ export default function AdvisoryPage() {
           </div>
         )}
 
-        {/* Form State (State, District, Crop Dropdowns) */}
+        {/* Progressive Disclosure Form: One Decision at a Time */}
         {!isLoading && !advisory && !error && (
           <div className="space-y-5">
-            {/* State Selection */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-stone-700 block">
-                {t.selectState}
-              </label>
-              <select
-                value={selectedState}
-                onChange={(e) => handleStateChange(e.target.value)}
-                className="w-full min-h-[48px] px-4 py-2.5 rounded-xl bg-white border border-stone-300 text-stone-900 font-medium text-base focus:ring-2 focus:ring-[#14532d] focus:outline-none"
-              >
-                {INDIAN_STATES.map((state) => {
-                  const label =
-                    language === 'hi'
-                      ? state.name_hi
-                      : language === 'bn'
-                      ? state.name_bn
-                      : state.name;
-                  return (
-                    <option key={state.name} value={state.name}>
-                      {label} ({state.name})
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
+            {/* STEP 1: Select State */}
+            {formStep === 'state' && (
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <span className="text-xs font-bold text-emerald-900 bg-emerald-100 px-2.5 py-1 rounded-md">
+                    {t.step1Title}
+                  </span>
+                  <h2 className="text-xl font-bold text-[#111827] pt-2">
+                    {t.selectState}
+                  </h2>
+                </div>
 
-            {/* District Selection (Cascading based on state) */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-stone-700 block">
-                {t.selectDistrict}
-              </label>
-              <select
-                value={selectedDistrict}
-                onChange={(e) => setSelectedDistrict(e.target.value)}
-                className="w-full min-h-[48px] px-4 py-2.5 rounded-xl bg-white border border-stone-300 text-stone-900 font-medium text-base focus:ring-2 focus:ring-[#14532d] focus:outline-none"
-              >
-                {currentStateObj.districts.map((district) => {
-                  const label =
-                    language === 'hi'
-                      ? district.name_hi
-                      : language === 'bn'
-                      ? district.name_bn
-                      : district.name;
-                  return (
-                    <option key={district.name} value={district.name}>
-                      {label} ({district.name})
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
+                <div className="space-y-1.5">
+                  <select
+                    value={selectedState}
+                    onChange={(e) => handleStateChange(e.target.value)}
+                    className="w-full min-h-[52px] px-4 py-3 rounded-xl bg-white border-2 border-stone-300 text-stone-900 font-semibold text-base focus:ring-2 focus:ring-[#14532d] focus:outline-none"
+                  >
+                    {INDIAN_STATES.map((state) => {
+                      const label =
+                        language === 'hi'
+                          ? state.name_hi
+                          : language === 'bn'
+                          ? state.name_bn
+                          : state.name;
+                      return (
+                        <option key={state.name} value={state.name}>
+                          {label} ({state.name})
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
 
-            {/* Crop Type Selection */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-stone-700 block">
-                {t.selectCrop}
-              </label>
-              <select
-                value={selectedCrop}
-                onChange={(e) => setSelectedCrop(e.target.value)}
-                className="w-full min-h-[48px] px-4 py-2.5 rounded-xl bg-white border border-stone-300 text-stone-900 font-medium text-base focus:ring-2 focus:ring-[#14532d] focus:outline-none"
-              >
-                {CROPS_LIST.map((crop) => {
-                  const label =
-                    language === 'hi'
-                      ? crop.name_hi
-                      : language === 'bn'
-                      ? crop.name_bn
-                      : crop.name_en;
-                  return (
-                    <option key={crop.id} value={crop.name_en}>
-                      {label} ({crop.name_en})
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
+                <button
+                  onClick={() => setFormStep('district')}
+                  className="w-full min-h-[56px] px-6 py-4 rounded-xl bg-[#14532d] hover:bg-[#166534] active:bg-[#0f3d20] text-white font-semibold text-lg flex items-center justify-center gap-3 transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-[#14532d]/30"
+                >
+                  <span>{t.nextBtn}</span>
+                </button>
+              </div>
+            )}
 
-            {/* Submit Action Button */}
-            <div className="pt-3">
-              <button
-                onClick={fetchAdvisory}
-                className="w-full min-h-[56px] px-6 py-4 rounded-xl bg-[#14532d] hover:bg-[#166534] active:bg-[#0f3d20] text-white font-medium text-lg flex items-center justify-center gap-3 transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-[#14532d]/30"
-              >
-                <CloudSun className="w-6 h-6" strokeWidth={2} />
-                <span>{t.getAdvisory}</span>
-              </button>
-            </div>
+            {/* STEP 2: Select District */}
+            {formStep === 'district' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between bg-stone-100 px-3 py-2 rounded-lg border border-stone-200">
+                  <span className="text-xs font-semibold text-stone-900">
+                    राज्य: {selectedState}
+                  </span>
+                  <button
+                    onClick={() => setFormStep('state')}
+                    className="text-xs font-bold text-[#14532d] hover:underline px-2 py-1 min-h-[36px]"
+                  >
+                    {t.changeBtn}
+                  </button>
+                </div>
+
+                <div className="space-y-1">
+                  <span className="text-xs font-bold text-emerald-900 bg-emerald-100 px-2.5 py-1 rounded-md">
+                    {t.step2Title}
+                  </span>
+                  <h2 className="text-xl font-bold text-[#111827] pt-2">
+                    {t.selectDistrict}
+                  </h2>
+                </div>
+
+                <div className="space-y-1.5">
+                  <select
+                    value={selectedDistrict}
+                    onChange={(e) => setSelectedDistrict(e.target.value)}
+                    className="w-full min-h-[52px] px-4 py-3 rounded-xl bg-white border-2 border-stone-300 text-stone-900 font-semibold text-base focus:ring-2 focus:ring-[#14532d] focus:outline-none"
+                  >
+                    {currentStateObj.districts.map((district) => {
+                      const label =
+                        language === 'hi'
+                          ? district.name_hi
+                          : language === 'bn'
+                          ? district.name_bn
+                          : district.name;
+                      return (
+                        <option key={district.name} value={district.name}>
+                          {label} ({district.name})
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+
+                <button
+                  onClick={() => setFormStep('crop')}
+                  className="w-full min-h-[56px] px-6 py-4 rounded-xl bg-[#14532d] hover:bg-[#166534] active:bg-[#0f3d20] text-white font-semibold text-lg flex items-center justify-center gap-3 transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-[#14532d]/30"
+                >
+                  <span>{t.nextBtn}</span>
+                </button>
+              </div>
+            )}
+
+            {/* STEP 3: Select Crop */}
+            {formStep === 'crop' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between bg-stone-100 px-3 py-2 rounded-lg border border-stone-200">
+                  <span className="text-xs font-semibold text-stone-900">
+                    स्थान: {selectedDistrict}, {selectedState}
+                  </span>
+                  <button
+                    onClick={() => setFormStep('district')}
+                    className="text-xs font-bold text-[#14532d] hover:underline px-2 py-1 min-h-[36px]"
+                  >
+                    {t.changeBtn}
+                  </button>
+                </div>
+
+                <div className="space-y-1">
+                  <span className="text-xs font-bold text-emerald-900 bg-emerald-100 px-2.5 py-1 rounded-md">
+                    {t.step3Title}
+                  </span>
+                  <h2 className="text-xl font-bold text-[#111827] pt-2">
+                    {t.selectCrop}
+                  </h2>
+                </div>
+
+                <div className="space-y-1.5">
+                  <select
+                    value={selectedCrop}
+                    onChange={(e) => setSelectedCrop(e.target.value)}
+                    className="w-full min-h-[52px] px-4 py-3 rounded-xl bg-white border-2 border-stone-300 text-stone-900 font-semibold text-base focus:ring-2 focus:ring-[#14532d] focus:outline-none"
+                  >
+                    {CROPS_LIST.map((crop) => {
+                      const label =
+                        language === 'hi'
+                          ? crop.name_hi
+                          : language === 'bn'
+                          ? crop.name_bn
+                          : crop.name_en;
+                      return (
+                        <option key={crop.id} value={crop.name_en}>
+                          {label} ({crop.name_en})
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    onClick={fetchAdvisory}
+                    className="w-full min-h-[56px] px-6 py-4 rounded-xl bg-[#14532d] hover:bg-[#166534] active:bg-[#0f3d20] text-white font-semibold text-lg flex items-center justify-center gap-3 transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-[#14532d]/30"
+                  >
+                    <CloudSun className="w-6 h-6" strokeWidth={2} />
+                    <span>{t.getAdvisory}</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>

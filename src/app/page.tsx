@@ -14,12 +14,12 @@ export default function HomePage() {
             <h1 className="font-semibold text-lg tracking-tight text-[#111827] leading-none">
               FasalSetu
             </h1>
-            <span className="text-xs text-[#4b5563] font-medium">
+            <span className="text-xs text-[#1f2937] font-semibold">
               फसल सेतु
             </span>
           </div>
         </div>
-        <span className="text-xs font-semibold px-2.5 py-1 bg-stone-200 text-stone-800 rounded">
+        <span className="text-xs font-semibold px-2.5 py-1 bg-stone-200 text-stone-900 rounded">
           किसान सहायता
         </span>
       </header>
@@ -30,10 +30,10 @@ export default function HomePage() {
           <h2 className="font-display text-3xl font-medium text-[#111827] leading-[1.2]">
             Diagnose crop illness &amp; get weather advice.
           </h2>
-          <p className="text-base text-[#374151] leading-relaxed">
+          <p className="text-base text-[#1f2937] leading-relaxed">
             Take a picture of an unhealthy leaf or check local weather-based irrigation and disease advisories.
           </p>
-          <p className="text-sm text-[#4b5563]">
+          <p className="text-sm text-[#1f2937] font-medium">
             पत्ती की फोटो से बीमारी पहचानें या अपने जिले का मौसम पूर्वानुमान व कृषि सलाह जानें।
           </p>
         </div>
@@ -62,8 +62,8 @@ export default function HomePage() {
 
       {/* Footer info for field accessibility */}
       <footer className="pt-6 border-t border-stone-200 text-center">
-        <p className="text-xs text-[#4b5563]">
-          Built for Indian agriculture &bull; Works in outdoor daylight
+        <p className="text-xs text-[#374151] font-medium">
+          Built for Indian agriculture | Works in outdoor daylight
         </p>
       </footer>
     </div>

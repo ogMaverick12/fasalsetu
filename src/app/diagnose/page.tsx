@@ -286,14 +286,14 @@ export default function DiagnosePage() {
               <h1 className="font-semibold text-base text-[#111827] leading-none">
                 {t.title}
               </h1>
-              <span className="text-xs text-[#4b5563] font-medium">
+              <span className="text-xs text-[#1f2937] font-semibold">
                 {t.subtitle}
               </span>
             </div>
           </div>
 
-          {/* Language Switcher Buttons in Native Script */}
-          <div className="flex items-center bg-stone-200/80 p-0.5 rounded-lg">
+          {/* Language Switcher Buttons in Native Script with >=44px touch targets & >=8px gap */}
+          <div className="flex items-center gap-2">
             {(['hi', 'bn', 'en'] as Language[]).map((lang) => {
               const labels = { hi: 'हिन्दी', bn: 'বাংলা', en: 'EN' };
               const isSelected = language === lang;
@@ -301,10 +301,10 @@ export default function DiagnosePage() {
                 <button
                   key={lang}
                   onClick={() => handleLanguageChange(lang)}
-                  className={`px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all min-h-[36px] ${
+                  className={`px-3 py-2 rounded-lg text-xs font-bold transition-all min-h-[44px] min-w-[48px] flex items-center justify-center ${
                     isSelected
                       ? 'bg-[#14532d] text-white shadow-xs'
-                      : 'text-stone-700 hover:text-stone-900'
+                      : 'bg-stone-200 text-stone-900 hover:bg-stone-300'
                   }`}
                   aria-pressed={isSelected}
                 >
@@ -321,14 +321,14 @@ export default function DiagnosePage() {
         {/* Loading State */}
         {isLoading && (
           <div className="text-center py-12 space-y-4">
-            <div className="w-16 h-16 rounded-full bg-emerald-100 text-[#14532d] flex items-center justify-center mx-auto animate-pulse">
+            <div className="w-16 h-16 rounded-full bg-emerald-100 text-[#14532d] flex items-center justify-center mx-auto motion-safe:animate-pulse">
               <Sparkles className="w-8 h-8" />
             </div>
             <div className="space-y-1">
               <h2 className="text-xl font-semibold text-[#111827]">
                 {t.analyzing}
               </h2>
-              <p className="text-sm text-[#4b5563]">{t.waitNote}</p>
+              <p className="text-sm text-[#1f2937] font-medium">{t.waitNote}</p>
             </div>
           </div>
         )}
@@ -341,11 +341,11 @@ export default function DiagnosePage() {
             </div>
             <div>
               <h3 className="font-semibold text-[#111827]">{t.errorTitle}</h3>
-              <p className="text-sm text-red-700 mt-1">{error}</p>
+              <p className="text-sm text-red-700 mt-1 font-medium">{error}</p>
             </div>
             <button
               onClick={handleReset}
-              className="px-5 py-2.5 rounded-lg bg-[#14532d] text-white font-medium text-sm hover:bg-[#166534]"
+              className="px-5 py-3 rounded-lg bg-[#14532d] text-white font-semibold text-sm hover:bg-[#166534] min-h-[44px]"
             >
               {t.tryAgain}
             </button>
@@ -377,10 +377,10 @@ export default function DiagnosePage() {
                 )}
               </div>
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider block">
+                <span className="text-xs font-bold block text-slate-800">
                   {diagnosis.is_healthy ? t.healthyTag : t.diseaseTag}
                 </span>
-                <h2 className="text-xl font-bold leading-tight">
+                <h2 className="text-xl font-bold leading-tight text-slate-950">
                   {diagnosis.disease}
                 </h2>
               </div>
@@ -388,7 +388,7 @@ export default function DiagnosePage() {
 
             {/* Crop Identification */}
             <div className="border-b border-stone-200 pb-3">
-              <span className="text-xs text-[#4b5563] font-medium block">
+              <span className="text-xs text-[#1f2937] font-semibold block">
                 Crop / फसल:
               </span>
               <p className="text-lg font-semibold text-[#111827]">
@@ -401,7 +401,7 @@ export default function DiagnosePage() {
               <h3 className="text-base font-semibold text-[#111827]">
                 {t.recommendationTitle}
               </h3>
-              <div className="bg-white border border-stone-200 rounded-xl p-4 text-[#1f2937] text-base leading-relaxed whitespace-pre-line">
+              <div className="bg-white border border-stone-200 rounded-xl p-4 text-[#111827] text-base leading-relaxed whitespace-pre-line font-medium">
                 {diagnosis.recommendation}
               </div>
             </div>
@@ -410,11 +410,11 @@ export default function DiagnosePage() {
             {diagnosis.audio_base64 && (
               <button
                 onClick={() => playAudio(diagnosis.audio_base64!)}
-                className="w-full min-h-[48px] px-5 py-3 rounded-xl bg-stone-100 hover:bg-stone-200 active:bg-stone-300 border border-stone-300 text-[#111827] font-medium text-base flex items-center justify-center gap-2.5 transition-colors focus:ring-2 focus:ring-[#14532d]"
+                className="w-full min-h-[48px] px-5 py-3 rounded-xl bg-stone-100 hover:bg-stone-200 active:bg-stone-300 border border-stone-300 text-[#111827] font-semibold text-base flex items-center justify-center gap-2.5 transition-colors focus:ring-2 focus:ring-[#14532d]"
               >
                 <Volume2
                   className={`w-5 h-5 text-[#14532d] ${
-                    isPlayingAudio ? 'animate-bounce' : ''
+                    isPlayingAudio ? 'motion-safe:animate-pulse text-emerald-700' : ''
                   }`}
                 />
                 <span>{t.replayAudio}</span>
@@ -435,19 +435,19 @@ export default function DiagnosePage() {
         {/* Initial Entry Points (Mutually Exclusive Photo vs Voice Note) */}
         {!isLoading && !diagnosis && !error && (
           <div className="space-y-5">
-            <p className="text-xs font-semibold uppercase tracking-wider text-[#4b5563] text-center">
+            <p className="text-sm font-semibold text-[#111827] text-center">
               {t.selectMode}
             </p>
 
             {/* Mode Switcher Tabs */}
-            <div className="grid grid-cols-2 gap-2 bg-stone-200/80 p-1 rounded-xl">
+            <div className="grid grid-cols-2 gap-2 bg-stone-200/80 p-1.5 rounded-xl">
               <button
                 type="button"
                 onClick={() => setActiveTab('photo')}
-                className={`py-2.5 text-sm font-semibold rounded-lg flex items-center justify-center gap-2 transition-all min-h-[44px] ${
+                className={`py-3 text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-all min-h-[48px] ${
                   activeTab === 'photo'
                     ? 'bg-white text-[#111827] shadow-xs'
-                    : 'text-stone-600 hover:text-stone-900'
+                    : 'text-stone-800 hover:text-stone-950'
                 }`}
               >
                 <Camera className="w-4 h-4 text-[#14532d]" />
@@ -456,10 +456,10 @@ export default function DiagnosePage() {
               <button
                 type="button"
                 onClick={() => setActiveTab('voice')}
-                className={`py-2.5 text-sm font-semibold rounded-lg flex items-center justify-center gap-2 transition-all min-h-[44px] ${
+                className={`py-3 text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-all min-h-[48px] ${
                   activeTab === 'voice'
                     ? 'bg-white text-[#111827] shadow-xs'
-                    : 'text-stone-600 hover:text-stone-900'
+                    : 'text-stone-800 hover:text-stone-950'
                 }`}
               >
                 <Mic className="w-4 h-4 text-[#14532d]" />
@@ -490,7 +490,7 @@ export default function DiagnosePage() {
                     <div className="font-semibold text-lg leading-tight">
                       {t.takePhoto}
                     </div>
-                    <div className="text-xs text-stone-200 mt-0.5">
+                    <div className="text-xs text-stone-100 font-medium mt-0.5">
                       {t.photoSub}
                     </div>
                   </div>
@@ -513,7 +513,7 @@ export default function DiagnosePage() {
                       <div className="font-semibold text-lg leading-tight">
                         {t.orVoice}
                       </div>
-                      <div className="text-xs text-amber-100 mt-0.5">
+                      <div className="text-xs text-amber-50 font-medium mt-0.5">
                         {t.voiceSub}
                       </div>
                     </div>
@@ -521,10 +521,10 @@ export default function DiagnosePage() {
                 ) : (
                   <button
                     onClick={stopRecording}
-                    className="w-full min-h-[64px] px-6 py-4 rounded-2xl bg-red-600 hover:bg-red-700 text-white flex items-center justify-between transition-all shadow-md animate-pulse focus:outline-none"
+                    className="w-full min-h-[64px] px-6 py-4 rounded-2xl bg-red-600 hover:bg-red-700 text-white flex items-center justify-between transition-all shadow-md motion-safe:animate-pulse focus:outline-none"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-4 h-4 rounded-full bg-white animate-ping" />
+                      <div className="w-4 h-4 rounded-full bg-white motion-safe:animate-ping" />
                       <span className="font-semibold text-base">
                         {t.recording} ({recordingSeconds}s)
                       </span>
