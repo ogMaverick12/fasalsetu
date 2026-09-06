@@ -183,16 +183,16 @@ function getWeatherAdvisoryFallback(
 
   const translations = {
     en: {
-      advisory: `1. Irrigation Timing: ${rainNoteEn}\n2. Pest & Disease Risk: ${pestNoteEn}\n3. Field Action: Ensure drainage channels in your ${crop} field are clear of debris.`,
-      spoken: `${district} weather update: ${rainNoteEn} Watch out for fungal risks due to moisture.`,
+      advisory: `1. Irrigation Timing: ${rainNoteEn}\n2. Pest & Disease Risk: ${pestNoteEn}\n3. Regenerative Practice: Add a 3–5 cm layer of dry crop residue or straw as mulch around the base of your ${crop} plants — this retains soil moisture, suppresses weeds, and feeds soil microbes as it breaks down, reducing your need for chemical inputs over time.\n4. Field Action: Ensure drainage channels in your ${crop} field are clear of debris to prevent waterlogging after any rain.`,
+      spoken: `${district} weather update: ${rainNoteEn} As a regenerative tip, mulch around your ${crop} plants with crop residue to hold moisture and improve soil health.`,
     },
     hi: {
-      advisory: `1. सिंचाई सलाह: ${rainNoteHi}\n2. रोग व कीट प्रबंधन: ${pestNoteHi}\n3. खेत प्रबंधन: ${district} में अपने ${crop} के खेत में पानी निकासी की उचित व्यवस्था रखें।`,
-      spoken: `${district} मौसम सलाह: ${rainNoteHi} नमी के कारण फसल की फफूंद से सुरक्षा करें।`,
+      advisory: `1. सिंचाई सलाह: ${rainNoteHi}\n2. रोग व कीट प्रबंधन: ${pestNoteHi}\n3. प्राकृतिक खेती सलाह: अपने ${crop} के पौधों के चारों ओर 3–5 सेंटीमीटर मोटी फसल अवशेष या पुआल की पर्त बिछाएं — यह मिट्टी में नमी बनाए रखती है, खरपतवार रोकती है और मिट्टी के जीवाणुओं को पोषण देकर रासायनिक खादों की जरूरत को कम करती है।\n4. खेत प्रबंधन: ${district} में अपने ${crop} के खेत में पानी निकासी की उचित व्यवस्था रखें।`,
+      spoken: `${district} मौसम सलाह: ${rainNoteHi} प्राकृतिक खेती के लिए, ${crop} के पौधों के नीचे फसल अवशेष की पर्त बिछाएं जिससे मिट्टी स्वस्थ रहे।`,
     },
     bn: {
-      advisory: `১. সেচ পরামর্শ: ${rainNoteBn}\n২. রোগ ও পোকা নিয়ন্ত্রণ: ${pestNoteBn}\n৩. মাঠের পরিচর্যা: ${district} অঞ্চলে আপনার ${crop} জমিতে নিকাশী ব্যবস্থা ঠিক রাখুন।`,
-      spoken: `${district} আবহাওয়া পরামর্শ: ${rainNoteBn} আর্দ্রতার কারণে ছত্রাকজনিত রোগের ঝুঁকি থেকে সতর্ক থাকুন।`,
+      advisory: `১. সেচ পরামর্শ: ${rainNoteBn}\n২. রোগ ও পোকা নিয়ন্ত্রণ: ${pestNoteBn}\n৩. পুনরুজ্জীবনমূলক চাষ পরামর্শ: আপনার ${crop} গাছের গোড়ার চারপাশে ৩–৫ সেন্টিমিটার পুরু শুকনো ফসলের অবশিষ্টাংশ বা খড় বিছিয়ে দিন — এটি মাটিতে আর্দ্রতা ধরে রাখে, আগাছা দমন করে এবং মাটির জীবাণুদের পুষ্টি দিয়ে রাসায়নিক সারের প্রয়োজন কমায়।\n৪. মাঠের পরিচর্যা: ${district} অঞ্চলে আপনার ${crop} জমিতে নিকাশী ব্যবস্থা ঠিক রাখুন।`,
+      spoken: `${district} আবহাওয়া পরামর্শ: ${rainNoteBn} টেকসই চাষের জন্য ${crop} গাছের গোড়ায় ফসলের অবশিষ্টাংশ বিছিয়ে মাটির স্বাস্থ্য উন্নত করুন।`,
     },
   };
 
@@ -425,7 +425,7 @@ export async function generateWeatherAdvisory(
 
   const ai = new GoogleGenAI({ apiKey });
 
-  const prompt = `You are FasalSetu's expert agricultural meteorologist.
+  const prompt = `You are FasalSetu's expert agricultural advisor specializing in Indian smallholder farming and regenerative agriculture.
 Location: ${district}, ${state}, India.
 Crop: ${crop}.
 Weather conditions:
@@ -436,16 +436,18 @@ Weather conditions:
 - Conditions: ${weather.weather_description}
 
 Provide a short, localized, actionable recommendation for a farmer in plain language with no academic jargon.
-Address:
-1. Irrigation timing (whether to water or wait given rain).
-2. Pest/disease risk given the current humidity and temperature.
-3. Timely field action.
+You MUST address all four of the following points — each as one clear bullet:
+1. Irrigation timing: whether to water today or wait, given the current rain forecast.
+2. Pest and disease risk: what to watch for given the humidity and temperature, and a low-cost organic or natural control if risk is high.
+3. Regenerative or sustainable practice: recommend ONE specific regenerative action genuinely suited to this crop and the current season — such as mulching with crop residue to retain moisture, sowing a legume cover crop after harvest, adding compost or vermicompost now, practicing reduced tillage to protect soil biology, or planning a rotation with a nitrogen-fixing crop. Do NOT include this point if nothing genuinely applies — but in most cases at least one action will be relevant. Explain it in one plain sentence a farmer with no agronomy background can follow.
+4. Timely field action: one immediate task to do today or this week.
+
 Language to respond in: ${language === 'hi' ? 'Hindi' : language === 'bn' ? 'Bengali' : 'English'}.
 
 Respond strictly with a JSON object:
 {
-  "advisory_text": "3 clear bullet points of practical field advice in ${language === 'hi' ? 'Hindi' : language === 'bn' ? 'Bengali' : 'English'}.",
-  "spoken_text": "A friendly 2-sentence conversational spoken summary to read aloud to the farmer in ${language === 'hi' ? 'Hindi' : language === 'bn' ? 'Bengali' : 'English'}."
+  "advisory_text": "4 clear numbered bullet points of practical field advice in ${language === 'hi' ? 'Hindi' : language === 'bn' ? 'Bengali' : 'English'}. Each bullet must be specific — no vague filler.",
+  "spoken_text": "A friendly 2-sentence conversational spoken summary to read aloud to the farmer in ${language === 'hi' ? 'Hindi' : language === 'bn' ? 'Bengali' : 'English'}. Mention the regenerative tip in the spoken summary if one was given."
 }
 Only output raw JSON.`;
 
