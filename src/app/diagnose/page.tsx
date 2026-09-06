@@ -14,6 +14,7 @@ import {
   Sparkles,
   ArrowRight,
   X,
+  MapPin,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { I18N } from '@/lib/i18n';
@@ -26,6 +27,7 @@ interface DiagnosisResult {
   is_healthy: boolean;
   confidence: 'High' | 'Moderate' | 'Low';
   recommendation: string;
+  disclaimer: string;
   spoken_text: string;
   language: string;
   audio_base64?: string;
@@ -335,6 +337,18 @@ export default function DiagnosePage() {
                 {diagnosis.recommendation}
               </div>
             </div>
+
+            {/* KVK Disclaimer — same visual weight as recommendation, always visible */}
+            {(diagnosis.disclaimer || t.diagnose.kvkDisclaimer) && (
+              <div className="flex items-start gap-3 p-4 rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40">
+                <div className="w-9 h-9 rounded-lg bg-amber-500 dark:bg-amber-600 flex items-center justify-center shrink-0 mt-0.5">
+                  <MapPin className="w-5 h-5 text-white" />
+                </div>
+                <p className="text-sm font-semibold text-amber-900 dark:text-amber-200 leading-relaxed">
+                  {diagnosis.disclaimer || t.diagnose.kvkDisclaimer}
+                </p>
+              </div>
+            )}
 
             {/* Voice Replay Button */}
             {diagnosis.audio_base64 && (

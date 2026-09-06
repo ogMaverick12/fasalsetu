@@ -7,6 +7,7 @@ export interface DiagnosisResult {
   is_healthy: boolean;
   confidence: 'High' | 'Moderate' | 'Low';
   recommendation: string;
+  disclaimer: string;
   spoken_text: string;
   language: 'hi' | 'bn' | 'en';
   audio_base64?: string;
@@ -24,6 +25,25 @@ export interface AdvisoryResult {
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** KVK disclaimer text and its spoken suffix, per language */
+function getKvkDisclaimer(language: 'hi' | 'bn' | 'en'): { text: string; spoken: string } {
+  const map = {
+    hi: {
+      text: '⚠️ यह एक प्रारंभिक राय है — अगर समस्या गंभीर लगे या सुझाव से ठीक न हो, तो कृपया नजदीकी कृषि विज्ञान केंद्र (KVK) या कृषि विस्तार अधिकारी से मिलें।',
+      spoken: 'ध्यान दें: यह एक प्रारंभिक राय है। यदि समस्या गंभीर हो, तो कृषि विज्ञान केंद्र से अवश्य मिलें।',
+    },
+    bn: {
+      text: '⚠️ এটি একটি প্রাথমিক মতামত — সমস্যা গুরুতর মনে হলে বা পরামর্শে ঠিক না হলে, অনুগ্রহ করে নিকটস্থ কৃষি বিজ্ঞান কেন্দ্র (KVK) বা কৃষি সম্প্রসারণ অফিসে যোগাযোগ করুন।',
+      spoken: 'মনে রাখবেন: এটি একটি প্রাথমিক মতামত। সমস্যা গুরুতর হলে কৃষি বিজ্ঞান কেন্দ্রে যোগাযোগ করুন।',
+    },
+    en: {
+      text: '⚠️ This is a first opinion — if the problem looks serious or the recommendation does not clearly resolve it, a visit to your local Krishi Vigyan Kendra (KVK) or agriculture extension office is worthwhile.',
+      spoken: 'Please note: this is a first opinion. If the problem looks serious or does not resolve, visit your local Krishi Vigyan Kendra or agriculture extension office.',
+    },
+  };
+  return map[language] ?? map.en;
+}
 
 /**
  * Call Gemini with exponential backoff and jitter to survive free-tier rate limits
@@ -79,13 +99,15 @@ function getAgronomicFallback(cropHint: string, isHealthy: boolean, language: 'h
       },
     };
     const t = translations[language] || translations.en;
+    const kvk = getKvkDisclaimer(language);
     return {
       crop: t.crop,
       disease: t.disease,
       is_healthy: true,
       confidence: 'High',
       recommendation: t.recommendation,
-      spoken_text: t.spoken_text,
+      disclaimer: kvk.text,
+      spoken_text: t.spoken_text + ' ' + kvk.spoken,
       language,
     };
   }
@@ -112,13 +134,15 @@ function getAgronomicFallback(cropHint: string, isHealthy: boolean, language: 'h
     },
   };
   const t = translations[language] || translations.en;
+  const kvk = getKvkDisclaimer(language);
   return {
     crop: t.crop,
     disease: t.disease,
     is_healthy: false,
     confidence: 'High',
     recommendation: t.recommendation,
-    spoken_text: t.spoken_text,
+    disclaimer: kvk.text,
+    spoken_text: t.spoken_text + ' ' + kvk.spoken,
     language,
   };
 }
@@ -269,10 +293,12 @@ Only output raw JSON.`;
     });
 
     const parsed = JSON.parse(response.text || '{}');
+    const kvk = getKvkDisclaimer(language);
+    const spokenWithDisclaimer = (parsed.spoken_text || parsed.recommendation) + ' ' + kvk.spoken;
     let audioBase64: string | undefined;
 
     try {
-      audioBase64 = await generateSpokenAudio(parsed.spoken_text || parsed.recommendation, language);
+      audioBase64 = await generateSpokenAudio(spokenWithDisclaimer, language);
     } catch {
       audioBase64 = createWavAudioBuffer(2.0, 8000, 440);
     }
@@ -283,7 +309,8 @@ Only output raw JSON.`;
       is_healthy: Boolean(parsed.is_healthy),
       confidence: parsed.confidence || 'High',
       recommendation: parsed.recommendation || 'Keep your plants well aerated and clean.',
-      spoken_text: parsed.spoken_text || parsed.recommendation,
+      disclaimer: kvk.text,
+      spoken_text: spokenWithDisclaimer,
       language,
       audio_base64: audioBase64,
     };
@@ -348,10 +375,12 @@ Only output raw JSON.`;
     });
 
     const parsed = JSON.parse(response.text || '{}');
+    const kvk = getKvkDisclaimer(language);
+    const spokenWithDisclaimer = (parsed.spoken_text || parsed.recommendation) + ' ' + kvk.spoken;
     let audioBase64: string | undefined;
 
     try {
-      audioBase64 = await generateSpokenAudio(parsed.spoken_text || parsed.recommendation, language);
+      audioBase64 = await generateSpokenAudio(spokenWithDisclaimer, language);
     } catch {
       audioBase64 = createWavAudioBuffer(2.5, 8000, 392);
     }
@@ -362,7 +391,8 @@ Only output raw JSON.`;
       is_healthy: Boolean(parsed.is_healthy),
       confidence: parsed.confidence || 'Moderate',
       recommendation: parsed.recommendation || 'Consult your local Krishi Vigyan Kendra if symptoms persist.',
-      spoken_text: parsed.spoken_text || parsed.recommendation,
+      disclaimer: kvk.text,
+      spoken_text: spokenWithDisclaimer,
       language,
       audio_base64: audioBase64,
     };

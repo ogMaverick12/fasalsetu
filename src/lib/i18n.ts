@@ -45,6 +45,7 @@ export interface Translations {
     confidenceModerate: string;
     confidenceLow: string;
     recommendationTitle: string;
+    kvkDisclaimer: string;
     replayAudio: string;
     checkAnother: string;
     errorTitle: string;
@@ -185,6 +186,7 @@ export const I18N: Record<Language, Translations> = {
       confidenceModerate: 'मध्यम (Moderate)',
       confidenceLow: 'कम (Low)',
       recommendationTitle: 'किसान भाइयों के लिए समाधान:',
+      kvkDisclaimer: '⚠️ यह एक प्रारंभिक राय है — अगर समस्या गंभीर लगे या सुझाव से ठीक न हो, तो कृपया नजदीकी कृषि विज्ञान केंद्र (KVK) या कृषि विस्तार अधिकारी से मिलें।',
       replayAudio: 'आवाज फिर से सुनें',
       checkAnother: 'दूसरी फसल की जांच करें',
       errorTitle: 'जांच पूरी नहीं हो सकी',
@@ -323,6 +325,7 @@ export const I18N: Record<Language, Translations> = {
       confidenceModerate: 'মাঝারি (Moderate)',
       confidenceLow: 'কম (Low)',
       recommendationTitle: 'কৃষক ভাইদের জন্য সমাধান:',
+      kvkDisclaimer: '⚠️ এটি একটি প্রাথমিক মতামত — সমস্যা গুরুতর মনে হলে বা পরামর্শে ঠিক না হলে, অনুগ্রহ করে নিকটস্থ কৃষি বিজ্ঞান কেন্দ্র (KVK) বা কৃষি সম্প্রসারণ অফিসে যোগাযোগ করুন।',
       replayAudio: 'আবার শুনুন',
       checkAnother: 'অন্য ফসল পরীক্ষা করুন',
       errorTitle: 'পরীক্ষা সম্পন্ন করা যায়নি',
@@ -461,6 +464,7 @@ export const I18N: Record<Language, Translations> = {
       confidenceModerate: 'Moderate',
       confidenceLow: 'Low',
       recommendationTitle: 'Recommended Farmer Treatment Protocol:',
+      kvkDisclaimer: '⚠️ This is a first opinion — if the problem looks serious or the recommendation does not clearly resolve it, a visit to your local Krishi Vigyan Kendra (KVK) or agriculture extension office is worthwhile.',
       replayAudio: 'Listen to Advice',
       checkAnother: 'Check Another Crop',
       errorTitle: 'Diagnosis Incomplete',
