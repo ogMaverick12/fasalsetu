@@ -315,6 +315,85 @@ FaasalSetu/
 
 ---
 
+## 🌐 Public Data API
+
+FasalSetu exposes one **read-only, unauthenticated, CORS-open** endpoint designed for
+state government dashboards, agricultural research institutions, and partner platforms
+to consume aggregate crop disease telemetry — supporting the platform's role as a
+**scalable digital public good enabling states to share agricultural data models**.
+
+No personally identifiable information is ever stored. Records contain only crop type,
+disease name, state, and timestamp.
+
+### `GET /api/public/summary`
+
+**Live endpoint:** `https://fasalsetu-theta.vercel.app/api/public/summary`
+
+No API key. No authentication. No rate-limit for reasonable polling intervals.
+
+#### Response shape
+
+```json
+{
+  "meta": {
+    "description": "FasalSetu public aggregate statistics API...",
+    "source": "fasalsetu-theta.vercel.app",
+    "docs": "https://github.com/ogMaverick12/fasalsetu#public-data-api",
+    "generated_at": "2026-09-06T07:30:00.000Z",
+    "record_count": 12,
+    "data_includes_live_db": true
+  },
+  "summary": {
+    "total_diagnoses": 12,
+    "diseased_count": 10,
+    "healthy_count": 2,
+    "disease_rate_percent": 83,
+    "active_states": 6,
+    "active_districts": 9
+  },
+  "diagnoses_by_state": [
+    { "state": "Maharashtra",    "total": 3, "diseased": 2, "healthy": 1 },
+    { "state": "Punjab",         "total": 2, "diseased": 2, "healthy": 0 },
+    { "state": "West Bengal",    "total": 2, "diseased": 2, "healthy": 0 },
+    { "state": "Uttar Pradesh",  "total": 2, "diseased": 1, "healthy": 1 },
+    { "state": "Madhya Pradesh", "total": 2, "diseased": 2, "healthy": 0 },
+    { "state": "Karnataka",      "total": 1, "diseased": 1, "healthy": 0 }
+  ],
+  "top_diseases": [
+    { "disease": "Early Blight (अगेती झुलसा)",   "count": 3 },
+    { "disease": "Yellow Rust (पीली रतुआ)",      "count": 2 },
+    { "disease": "Cotton Leaf Curl Virus",        "count": 2 },
+    { "disease": "Soybean Rust (सोयाबीन रतुआ)", "count": 1 }
+  ],
+  "crop_distribution": [
+    { "crop": "Tomato",  "count": 4 },
+    { "crop": "Wheat",   "count": 3 },
+    { "crop": "Cotton",  "count": 2 },
+    { "crop": "Soybean", "count": 2 },
+    { "crop": "Rice",    "count": 1 }
+  ],
+  "language_breakdown": [
+    { "language": "hi", "label": "Hindi",   "count": 7 },
+    { "language": "en", "label": "English", "count": 3 },
+    { "language": "bn", "label": "Bengali", "count": 2 }
+  ]
+}
+```
+
+#### Notes for integrators
+
+| Property | Detail |
+|---|---|
+| `diagnoses_by_state` | Sorted descending by `total`. Merges live DB records with seed data. |
+| `top_diseases` | Top 10 pathogen names as reported by Gemini, sorted by frequency. |
+| `crop_distribution` | Count of diagnoses per crop across all states. |
+| `language_breakdown` | Tracks which languages farmers are using the platform in. |
+| `Cache-Control` | `s-maxage=300` — CDN caches for 5 min, stale-while-revalidate 10 min. |
+| `Access-Control-Allow-Origin` | `*` — any origin may fetch this endpoint. |
+| `data_includes_live_db` | `true` when Supabase is reachable; `false` means seed-data-only fallback. |
+
+---
+
 ## 👥 Authors & Acknowledgments
 
 Developed with ❤️ for Indian farmers.
