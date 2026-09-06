@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { SEED_DIAGNOSES } from '@/lib/seed-data';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase/client';
+import { getLang } from '@/lib/languages';
 
 export const dynamic = 'force-dynamic';
 
@@ -98,7 +99,7 @@ export async function GET() {
     const language_breakdown = Object.entries(langMap)
       .map(([language, count]) => ({
         language,
-        label: language === 'hi' ? 'Hindi' : language === 'bn' ? 'Bengali' : 'English',
+        label: getLang(language).englishName,
         count,
       }))
       .sort((a, b) => b.count - a.count);

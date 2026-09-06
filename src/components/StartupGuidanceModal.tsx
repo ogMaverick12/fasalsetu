@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { I18N } from '@/lib/i18n';
+import { getLang } from '@/lib/languages';
 
 interface SavedRecording {
   id: string;
@@ -111,13 +112,7 @@ export default function StartupGuidanceModal() {
     const textToSpeak = `${t.guidance.guideTitle1}. ${t.guidance.guideTip1}. ${t.guidance.guideTitle2}. ${t.guidance.guideTip2}. ${t.guidance.guideTitle3}. ${t.guidance.guideTip3}`;
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
 
-    if (language === 'hi') {
-      utterance.lang = 'hi-IN';
-    } else if (language === 'bn') {
-      utterance.lang = 'bn-IN';
-    } else {
-      utterance.lang = 'en-US';
-    }
+    utterance.lang = getLang(language).bcp47;
 
     utterance.onend = () => setIsSpeakingGuide(false);
     utterance.onerror = () => setIsSpeakingGuide(false);

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ShieldCheck, Sun, Moon, HelpCircle, ArrowLeft } from 'lucide-react';
 import { useApp, Language } from '@/context/AppContext';
 import { I18N } from '@/lib/i18n';
+import { SUPPORTED_LANGUAGES } from '@/lib/languages';
 
 interface NavbarProps {
   showBack?: boolean;
@@ -65,25 +66,24 @@ export default function Navbar({
 
         {/* Right: Language Switcher, Dark Mode & Guidance Button */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Native Script Language Switcher */}
+          {/* Native Script Language Switcher — driven by SUPPORTED_LANGUAGES config */}
           <div className="flex items-center gap-1 bg-stone-100 dark:bg-stone-800/90 p-1 rounded-xl border border-stone-200 dark:border-stone-700">
-            {(['hi', 'bn', 'en'] as Language[]).map((lang) => {
-              const labels = { hi: 'हिन्दी', bn: 'বাংলা', en: 'EN' };
-              const isSelected = language === lang;
+            {SUPPORTED_LANGUAGES.map((lang) => {
+              const isSelected = language === lang.code;
               return (
                 <button
-                  key={lang}
-                  id={`lang-btn-${lang}`}
-                  onClick={() => setLanguage(lang)}
+                  key={lang.code}
+                  id={`lang-btn-${lang.code}`}
+                  onClick={() => setLanguage(lang.code as Language)}
                   className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all min-h-[44px] min-w-[44px] flex items-center justify-center ${
                     isSelected
                       ? 'bg-[#14532d] text-white shadow-xs dark:bg-[#22c55e] dark:text-stone-950 font-extrabold'
                       : 'text-stone-800 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
                   }`}
                   aria-pressed={isSelected}
-                  aria-label={`Switch language to ${labels[lang]}`}
+                  aria-label={`Switch language to ${lang.englishName}`}
                 >
-                  {labels[lang]}
+                  {lang.nativeLabel}
                 </button>
               );
             })}

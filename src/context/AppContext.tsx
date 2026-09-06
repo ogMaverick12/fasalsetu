@@ -1,8 +1,11 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { SUPPORTED_LANGUAGES, VALID_LANGUAGE_CODES } from '@/lib/languages';
 
-export type Language = 'hi' | 'bn' | 'en';
+// Language union type is derived from the config array — adding a language
+// to SUPPORTED_LANGUAGES automatically extends this type.
+export type Language = (typeof SUPPORTED_LANGUAGES)[number]['code'];
 export type Theme = 'light' | 'dark';
 
 interface AppContextType {
@@ -41,10 +44,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       applyTheme(initial);
     }
 
-    // Language initialization
-    const savedLang = localStorage.getItem('fasalsetu_lang') as Language | null;
-    if (savedLang === 'hi' || savedLang === 'bn' || savedLang === 'en') {
-      setLanguageState(savedLang);
+    // Language initialization — validated against config set, not hardcoded codes
+    const savedLang = localStorage.getItem('fasalsetu_lang');
+    if (savedLang && VALID_LANGUAGE_CODES.has(savedLang)) {
+      setLanguageState(savedLang as Language);
     }
 
     // Check if first-time visitor to show guidance
@@ -60,8 +63,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setThemeState(e.newValue);
         applyTheme(e.newValue);
       }
-      if (e.key === 'fasalsetu_lang' && (e.newValue === 'hi' || e.newValue === 'bn' || e.newValue === 'en')) {
-        setLanguageState(e.newValue);
+      if (e.key === 'fasalsetu_lang' && e.newValue && VALID_LANGUAGE_CODES.has(e.newValue)) {
+        setLanguageState(e.newValue as Language);
       }
     };
 

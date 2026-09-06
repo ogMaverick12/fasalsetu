@@ -1,5 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import type { WeatherSnapshot } from './weather';
+import { getLang } from './languages';
 
 export interface DiagnosisResult {
   crop: string;
@@ -260,16 +261,17 @@ export async function diagnoseCropImage(
 
   const ai = new GoogleGenAI({ apiKey });
 
+  const langName = getLang(language).promptName;
   const prompt = `You are FasalSetu's expert agricultural plant pathologist.
 Analyze this crop/leaf image carefully.
 Respond strictly with a JSON object matching this schema:
 {
-  "crop": "Name of crop (in ${language === 'hi' ? 'Hindi' : language === 'bn' ? 'Bengali' : 'English'})",
-  "disease": "Specific disease name or 'Looks Healthy' (in ${language === 'hi' ? 'Hindi' : language === 'bn' ? 'Bengali' : 'English'})",
+  "crop": "Name of crop (in ${langName})",
+  "disease": "Specific disease name or 'Looks Healthy' (in ${langName})",
   "is_healthy": boolean,
   "confidence": "High" | "Moderate" | "Low",
-  "recommendation": "Short, practical, plain-language treatment or care steps for a farmer with no science background. No academic jargon. Written in ${language === 'hi' ? 'Hindi' : language === 'bn' ? 'Bengali' : 'English'}.",
-  "spoken_text": "A friendly 2-sentence conversational spoken diagnosis to read aloud to the farmer in ${language === 'hi' ? 'Hindi' : language === 'bn' ? 'Bengali' : 'English'}."
+  "recommendation": "Short, practical, plain-language treatment or care steps for a farmer with no science background. No academic jargon. Written in ${langName}.",
+  "spoken_text": "A friendly 2-sentence conversational spoken diagnosis to read aloud to the farmer in ${langName}."
 }
 Only output raw JSON.`;
 
@@ -341,17 +343,18 @@ export async function diagnoseCropAudio(
 
   const ai = new GoogleGenAI({ apiKey });
 
+  const langName = getLang(language).promptName;
   const prompt = `You are FasalSetu's expert agricultural plant pathologist.
 Listen directly to this voice note recorded by an Indian farmer describing their crop symptoms.
 Understand the spoken symptoms natively (no external STT).
 Respond strictly with a JSON object matching this schema:
 {
-  "crop": "Name of crop detected from speech (in ${language === 'hi' ? 'Hindi' : language === 'bn' ? 'Bengali' : 'English'})",
-  "disease": "Likely disease or 'Looks Healthy' (in ${language === 'hi' ? 'Hindi' : language === 'bn' ? 'Bengali' : 'English'})",
+  "crop": "Name of crop detected from speech (in ${langName})",
+  "disease": "Likely disease or 'Looks Healthy' (in ${langName})",
   "is_healthy": boolean,
   "confidence": "High" | "Moderate" | "Low",
-  "recommendation": "Plain-language, practical treatment advice written in ${language === 'hi' ? 'Hindi' : language === 'bn' ? 'Bengali' : 'English'}.",
-  "spoken_text": "A friendly 2-sentence conversational spoken summary to read aloud to the farmer in ${language === 'hi' ? 'Hindi' : language === 'bn' ? 'Bengali' : 'English'}."
+  "recommendation": "Plain-language, practical treatment advice written in ${langName}.",
+  "spoken_text": "A friendly 2-sentence conversational spoken summary to read aloud to the farmer in ${langName}."
 }
 Only output raw JSON.`;
 
@@ -425,6 +428,7 @@ export async function generateWeatherAdvisory(
 
   const ai = new GoogleGenAI({ apiKey });
 
+  const langName = getLang(language).promptName;
   const prompt = `You are FasalSetu's expert agricultural advisor specializing in Indian smallholder farming and regenerative agriculture.
 Location: ${district}, ${state}, India.
 Crop: ${crop}.
@@ -442,12 +446,12 @@ You MUST address all four of the following points — each as one clear bullet:
 3. Regenerative or sustainable practice: recommend ONE specific regenerative action genuinely suited to this crop and the current season — such as mulching with crop residue to retain moisture, sowing a legume cover crop after harvest, adding compost or vermicompost now, practicing reduced tillage to protect soil biology, or planning a rotation with a nitrogen-fixing crop. Do NOT include this point if nothing genuinely applies — but in most cases at least one action will be relevant. Explain it in one plain sentence a farmer with no agronomy background can follow.
 4. Timely field action: one immediate task to do today or this week.
 
-Language to respond in: ${language === 'hi' ? 'Hindi' : language === 'bn' ? 'Bengali' : 'English'}.
+Language to respond in: ${langName}.
 
 Respond strictly with a JSON object:
 {
-  "advisory_text": "4 clear numbered bullet points of practical field advice in ${language === 'hi' ? 'Hindi' : language === 'bn' ? 'Bengali' : 'English'}. Each bullet must be specific — no vague filler.",
-  "spoken_text": "A friendly 2-sentence conversational spoken summary to read aloud to the farmer in ${language === 'hi' ? 'Hindi' : language === 'bn' ? 'Bengali' : 'English'}. Mention the regenerative tip in the spoken summary if one was given."
+  "advisory_text": "4 clear numbered bullet points of practical field advice in ${langName}. Each bullet must be specific — no vague filler.",
+  "spoken_text": "A friendly 2-sentence conversational spoken summary to read aloud to the farmer in ${langName}. Mention the regenerative tip in the spoken summary if one was given."
 }
 Only output raw JSON.`;
 
@@ -513,7 +517,7 @@ export async function generateSpokenAudio(
           speechConfig: {
             voiceConfig: {
               prebuiltVoiceConfig: {
-                voiceName: language === 'hi' || language === 'bn' ? 'Puck' : 'Aoede',
+                voiceName: getLang(language).voiceName,
               },
             },
           },

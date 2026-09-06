@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { reverseGeocodeCoords, type PreciseGeocodeResult } from '@/lib/geo-india';
 import { I18N } from '@/lib/i18n';
+import { type Language } from '@/context/AppContext';
 import {
   MapPin,
   Navigation,
@@ -20,7 +21,7 @@ interface RealisticFarmMapProps {
   selectedState: string;
   selectedDistrict: string;
   onLocationSelect: (result: PreciseGeocodeResult) => void;
-  language: 'hi' | 'bn' | 'en';
+  language: Language;
   className?: string;
 }
 

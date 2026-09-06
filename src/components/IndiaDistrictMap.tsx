@@ -3,6 +3,8 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { INDIAN_STATES, findNearestDistrict, type DistrictCoord } from '@/lib/geo-india';
 import { I18N } from '@/lib/i18n';
+import { type Language } from '@/context/AppContext';
+import { getLang } from '@/lib/languages';
 import { MapPin, ZoomIn, ZoomOut, RotateCcw, Navigation } from 'lucide-react';
 
 interface IndiaDistrictMapProps {
@@ -10,7 +12,7 @@ interface IndiaDistrictMapProps {
   selectedDistrict: string;
   onSelectDistrict: (state: string, district: string, distanceKm?: number) => void;
   userCoords?: { lat: number; lon: number } | null;
-  language: 'hi' | 'bn' | 'en';
+  language: Language;
   className?: string;
 }
 
@@ -61,6 +63,7 @@ export default function IndiaDistrictMap({
 
   // Flatten all districts with projection
   const allProjectedDistricts = useMemo(() => {
+    const nameKey = getLang(language).districtNameKey;
     const list: Array<{
       state: string;
       district: DistrictCoord;
@@ -73,12 +76,8 @@ export default function IndiaDistrictMap({
     for (const state of INDIAN_STATES) {
       for (const dist of state.districts) {
         const { x, y } = projectCoords(dist.lat, dist.lon);
-        const label =
-          language === 'hi'
-            ? dist.name_hi
-            : language === 'bn'
-            ? dist.name_bn
-            : dist.name;
+        // Use the language-specific district name from config; fall back to English
+        const label = (dist as unknown as Record<string, string>)[nameKey] ?? dist.name;
 
         const isSelected =
           state.name.toLowerCase() === selectedState.toLowerCase() &&
